@@ -9,7 +9,7 @@ local g_eventFrame = nil
 local g_sampleRun = nil
 local g_currentRun = nil
 local g_currentInstanceId = 0
-local g_timerCalibrationTicker = nil
+local g_ticker = nil
 
 local function CreateRunSplits(run)
     run.splits = {}
@@ -43,9 +43,13 @@ local function RoundDuration(duration)
     return math.floor(duration * 1000 + 0.5) / 1000
 end
 
+local function SetDurationFromNow(run)
+    run.duration = RoundDuration(GetTime() - run.state.startTime)
+end
+
 local function SetStartTime(run, startTime)
     run.state.startTime = startTime
-    addon.Run:SetDurationFromNow(run)
+    SetDurationFromNow(run)
 end
 
 local function UpdateCriteriaSplits()
@@ -101,6 +105,32 @@ local function SetCurrentIfActiveOrPreviousRun(run)
     end
 end
 
+local function CancelTicker()
+    if g_ticker then
+        g_ticker:Cancel()
+        g_ticker = nil
+    end
+end
+
+local function OnTimerTick(run)
+    SetDurationFromNow(run)
+    addon.RunUI:UpdateTimerText(run.duration)
+end
+
+local function StartTimer(run)
+    OnTimerTick(run)
+    g_ticker = C_Timer.NewTicker(0.1, (function() OnTimerTick(run) end))
+end
+
+local function ChangeRunning(run, isRunning)
+    run.state.running = isRunning
+    if isRunning then
+        StartTimer(run)
+    else
+        CancelTicker()
+    end
+end
+
 local function OnRunStart(run, worldElapsedTime)
     run.state.active = true
     run.startTimestamp = time() - worldElapsedTime
@@ -109,30 +139,23 @@ local function OnRunStart(run, worldElapsedTime)
 end
 
 local function MaybeStartNewRun(run, worldElapsedTime)
-    run.state.running = true
     if not run.state.active then
         OnRunStart(run, worldElapsedTime)
     end
+    ChangeRunning(run, true)
     addon.RunUI:Show()
-end
-
-local function CancelTimerCalibration()
-    if g_timerCalibrationTicker then
-        g_timerCalibrationTicker:Cancel()
-        g_timerCalibrationTicker = nil
-    end
 end
 
 local function OnTimerCalibrationTick(run)
     local _, worldElapsedTime, timerType = GetWorldElapsedTime(1)
     if timerType ~= LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE then
-        CancelTimerCalibration()
+        CancelTicker()
         return
     end
     if worldElapsedTime > run.state.lastSeenWorldElapsedTime then
         SetStartTime(run, GetTime() - worldElapsedTime)
+        CancelTicker()
         MaybeStartNewRun(run, worldElapsedTime)
-        CancelTimerCalibration()
     end
 end
 
@@ -144,17 +167,14 @@ local function StartTimerCalibration(run)
         MaybeStartNewRun(run, worldElapsedTime)
         return
     end
+    CancelTicker()
     SetStartTime(run, 0)
     run.state.lastSeenWorldElapsedTime = worldElapsedTime
-    if g_timerCalibrationTicker then
-        CancelTimerCalibration()
-    end
-    g_timerCalibrationTicker = C_Timer.NewTicker(0.1, (function() OnTimerCalibrationTick(run) end))
+    g_ticker = C_Timer.NewTicker(0.1, (function() OnTimerCalibrationTick(run) end))
 end
 
 local function OnRunEnd(run, challengeCompletionInfo)
     run.state.active = false
-    CancelTimerCalibration()
     local instanceId = run.state.instanceId
     if challengeCompletionInfo then
         run.completed = true
@@ -165,7 +185,7 @@ local function OnRunEnd(run, challengeCompletionInfo)
 end
 
 local function MaybeEndRun(run, challengeCompletionInfo)
-    run.state.running = false
+    ChangeRunning(run, false)
     if run.state.active then
         OnRunEnd(run, challengeCompletionInfo)
     end
@@ -211,7 +231,7 @@ local function OnPlayerEnteringWorld(isInitialLogin, isReloadUI)
         end
         return
     end
-    run.state.running = false
+    ChangeRunning(run, false)
     if isReloadUI and InActiveChallengeMode() then
         StartTimerCalibration(run)
     else
@@ -260,14 +280,6 @@ function addon.Run:Init()
     g_eventFrame:SetScript("OnEvent", function(_, event, ...)
         EVENTS[event](...)
     end)
-end
-
-function addon.Run:Get()
-    return g_currentRun
-end
-
-function addon.Run:SetDurationFromNow(run)
-    run.duration = RoundDuration(GetTime() - run.state.startTime)
 end
 
 function addon.Run:CreateRun(instanceId)

@@ -2,7 +2,6 @@ local addonName, addon = ...
 
 addon.RunUI = addon.RunUI or {}
 
-local UPDATE_INTERVAL = 0.1
 local RUN_UI_WIDTH = 300
 
 local function FormatTimeParts(seconds)
@@ -61,15 +60,6 @@ local function SaveRunUIPosition(frame)
     }
 end
 
-function addon.RunUI:UpdateTimerText(runDuration)
-    local minutesText, secondsTensText, secondsOnesText, dotText, tenthsText = FormatTimeParts(runDuration)
-    self.timerText.minutes:SetText(minutesText)
-    self.timerText.secondsTens:SetText(secondsTensText)
-    self.timerText.secondsOnes:SetText(secondsOnesText)
-    self.timerText.dot:SetText(dotText)
-    self.timerText.milliseconds:SetText(tenthsText)
-end
-
 local function BuildSplitDifferenceTextAndColor(split, comparisonSplit)
     if split.completed and split.duration ~= 0 then
         if comparisonSplit and comparisonSplit.completed and comparisonSplit.duration ~= 0 then
@@ -97,6 +87,15 @@ local function BuildSplitDurationText(split, comparisonSplit)
     return "-"
 end
 
+function addon.RunUI:UpdateTimerText(runDuration)
+    local minutesText, secondsTensText, secondsOnesText, dotText, tenthsText = FormatTimeParts(runDuration)
+    self.timerText.minutes:SetText(minutesText)
+    self.timerText.secondsTens:SetText(secondsTensText)
+    self.timerText.secondsOnes:SetText(secondsOnesText)
+    self.timerText.dot:SetText(dotText)
+    self.timerText.milliseconds:SetText(tenthsText)
+end
+
 function addon.RunUI:Init()
     local runFrame = CreateFrame("Frame", "ChallengeModeTimerRunFrame", UIParent)
     runFrame:Hide()
@@ -118,26 +117,11 @@ function addon.RunUI:Init()
     runFrame:SetMovable(true)
     runFrame:EnableMouse(false)
     runFrame:RegisterForDrag("LeftButton")
-    runFrame.timeSinceLastUpdate = UPDATE_INTERVAL
 
     self.timerText = CreateTimerText(runFrame)
     self:UpdateTimerText(0)
 
     self.run = addon.Run:CreateRun(1004)
-
-    runFrame:SetScript("OnUpdate", function(frame, elapsed)
-        local run = self.run
-        if not run.state.running or run.state.startTime == 0 then
-            return
-        end
-        frame.timeSinceLastUpdate = frame.timeSinceLastUpdate + elapsed
-        if frame.timeSinceLastUpdate < UPDATE_INTERVAL then
-            return
-        end
-        frame.timeSinceLastUpdate = 0
-        addon.Run:SetDurationFromNow(run)
-        self:UpdateTimerText(run.duration)
-    end)
 
     local splitFrame = CreateFrame("Frame", nil, runFrame)
     splitFrame:SetPoint("TOP", runFrame, "BOTTOM", 0, -6)
@@ -272,7 +256,6 @@ function addon.RunUI:SetRun(run)
     self.run = run
     addon.RunUI:UpdateSplits()
     self:UpdateTimerText(self.run.duration)
-    self.runFrame.timeSinceLastUpdate = 0
 end
 
 function addon.RunUI:Show()
