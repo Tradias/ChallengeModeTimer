@@ -76,13 +76,19 @@ local function UpdateCriteriaSplits()
     addon.RunUI:UpdateSplits()
 end
 
-local function BuildRunner()
-    local _, _, classId = UnitClass("player")
-    local name = UnitName("player")
-    return {
-        name = name,
-        classId = classId
-    }
+local function BuildRunners()
+    local runners = {}
+    for _, unit in ipairs({ "player", "party1", "party2", "party3", "party4" }) do
+        local _, classId = UnitClassBase(unit)
+        local name = UnitName(unit)
+        if classId and name then
+            table.insert(runners, {
+                name = name,
+                classId = classId
+            })
+        end
+    end
+    return runners
 end
 
 local function SetCurrentRun(run)
@@ -134,7 +140,7 @@ end
 local function OnRunStart(run, worldElapsedTime)
     run.state.active = true
     run.startTimestamp = time() - worldElapsedTime
-    run.runner = BuildRunner()
+    run.runners = BuildRunners()
     UpdateCriteriaSplits()
 end
 
@@ -288,7 +294,7 @@ function addon.Run:CreateRun(instanceId)
         completed = false,
         startTimestamp = 0, -- time()
         duration = 0,       -- GetTime() - startTime
-        runner = BuildRunner(),
+        runners = BuildRunners(),
         splits = {}
     }
     CreateRunSplits(run)

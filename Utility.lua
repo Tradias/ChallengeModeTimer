@@ -24,3 +24,8 @@ function addon.Utility:ShallowClone(t)
     end
     return t2
 end
+
+function addon.Utility:GetClassColorById(classId)
+    local _, classToken = GetClassInfo(classId)
+    return classToken and RAID_CLASS_COLORS and RAID_CLASS_COLORS[classToken]
+end

@@ -16,6 +16,10 @@ function addon.Migrations:Run()
                         end
                     end
                 end
+                if run.runner then
+                    run.runners = { run.runner }
+                    run.runner = nil
+                end
             end
 
             if #runs == 0 or not runs[#runs].state then

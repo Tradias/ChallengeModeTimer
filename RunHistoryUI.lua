@@ -37,16 +37,13 @@ local function BuildSplitDurationText(split)
 end
 
 local function BuildRunnerNameText(run)
-    if not run or not run.runner then
+    if not run.runners or #run.runners < 1 then
         return "-"
     end
-
-    local name = run.runner.name
-    local classId = run.runner.classId
-    local _, classToken = GetClassInfo(classId)
-    local classColor = classToken and RAID_CLASS_COLORS and RAID_CLASS_COLORS[classToken]
+    local player = run.runners[1]
+    local classColor = addon.Utility:GetClassColorById(player.classId)
     local colorStr = string.format("ff%02x%02x%02x", classColor.r * 255, classColor.g * 255, classColor.b * 255)
-    return string.format("|c%s%s|r", colorStr, name)
+    return string.format("|c%s%s|r", colorStr, player.name)
 end
 
 local function CompareRowValues(tableFrame, rowa, rowb, sortby, valueGetter)
@@ -89,18 +86,24 @@ local function FilterRow(filterText, rowData)
     return false
 end
 
+local function ShowRunnersTooltip(cellFrame, run)
+    GameTooltip:SetOwner(cellFrame, "ANCHOR_RIGHT")
+    GameTooltip:SetText("Runners", 1, 0.82, 0)
+
+    for _, runner in ipairs(run.runners or {}) do
+        local name = runner.name
+        local classColor = addon.Utility:GetClassColorById(runner.classId)
+        GameTooltip:AddLine(name, classColor.r, classColor.g, classColor.b)
+    end
+
+    GameTooltip:Show()
+end
+
 local function ShowRunSplitsTooltip(cellFrame, run, instanceId)
-    if not run or not instanceId then
-        return
-    end
-
-    local splitProfile = addon.SplitProfile:Get(instanceId)
-    if not splitProfile then
-        return
-    end
-
     GameTooltip:SetOwner(cellFrame, "ANCHOR_RIGHT")
     GameTooltip:SetText("Splits", 1, 0.82, 0)
+
+    local splitProfile = addon.SplitProfile:Get(instanceId)
 
     for index, split in ipairs(run.splits or {}) do
         local splitDefinition = splitProfile.splits[index]
@@ -288,7 +291,9 @@ function addon.RunHistoryUI:CreateTable()
                 return false
             end
             local rowData = tableFrame:GetRow(realrow)
-            if rowData then
+            if column == RUNNER_INDEX then
+                ShowRunnersTooltip(cellFrame, rowData.run)
+            else
                 ShowRunSplitsTooltip(cellFrame, rowData.run, self.selectedInstanceId)
             end
             return false
