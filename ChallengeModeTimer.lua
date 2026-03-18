@@ -53,6 +53,7 @@ local function InitializeAddon()
     addon.Migrations:Run()
 
     HideBlizzardChallengeModeTimer()
+    addon.Constants:Init()
     addon.RunHistory:Init()
     addon.RunUI:Init()
     addon.Run:Init()

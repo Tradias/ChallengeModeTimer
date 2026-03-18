@@ -2,8 +2,6 @@ local addonName, addon = ...
 
 addon.RunUI = addon.RunUI or {}
 
-local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
-local FONT_2002 = (LSM and LSM:Fetch("font", "2002")) or "Fonts\\2002.TTF"
 local UPDATE_INTERVAL = 0.1
 local RUN_UI_WIDTH = 300
 
@@ -28,7 +26,7 @@ end
 local function CreateTimerTextPart(runFrame)
     local timerText = runFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     timerText:SetTextColor(1, 1, 1, 1)
-    timerText:SetFont(FONT_2002, 21, "OUTLINE")
+    timerText:SetFont(addon.Constants.FONT, 21, "OUTLINE")
     return timerText
 end
 
@@ -45,7 +43,7 @@ local function CreateTimerText(runFrame)
     timerText.secondsOnes:SetPoint("CENTER", runFrame, "CENTER", 0, 0)
     timerText.dot:SetPoint("CENTER", runFrame, "CENTER", 9, 0)
     timerText.milliseconds:SetPoint("CENTER", runFrame, "CENTER", 19, -2)
-    timerText.milliseconds:SetFont(FONT_2002, 13, "OUTLINE")
+    timerText.milliseconds:SetFont(addon.Constants.FONT, 13, "OUTLINE")
     return timerText
 end
 
@@ -219,18 +217,18 @@ function addon.RunUI:UpdateSplits()
             local label = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             label:SetPoint("LEFT", lineFrame, "LEFT", 0, 0)
             label:SetJustifyH("LEFT")
-            label:SetFont(FONT_2002, 14, "OUTLINE")
+            label:SetFont(addon.Constants.FONT, 14, "OUTLINE")
 
             local duration = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             duration:SetPoint("RIGHT", lineFrame, "RIGHT", -15, 0)
             duration:SetJustifyH("RIGHT")
-            duration:SetFont(FONT_2002, 14, "OUTLINE")
+            duration:SetFont(addon.Constants.FONT, 14, "OUTLINE")
             duration:SetTextColor(1, 1, 1, 1)
 
             local comparison = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             comparison:SetPoint("LEFT", duration, "RIGHT", 2, 0)
             comparison:SetJustifyH("LEFT")
-            comparison:SetFont(FONT_2002, 14, "OUTLINE")
+            comparison:SetFont(addon.Constants.FONT, 14, "OUTLINE")
 
             line = {
                 frame = lineFrame,

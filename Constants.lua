@@ -2,6 +2,10 @@ local addonName, addon = ...
 
 addon.Constants = addon.Constants or {}
 
+addon.LST = LibStub("ScrollingTable")
+
+addon.LSM = LibStub("LibSharedMedia-3.0")
+
 -- Challenge Mode dungeon info (Mists of Pandaria)
 addon.Constants.CHALLENGE_MODE_DUNGEONS = {
     [960] = {
@@ -97,3 +101,7 @@ addon.Constants.CHALLENGE_MODE_DUNGEONS = {
 }
 
 addon.Constants.CHALLENGE_MODE_DIFFICULTY_ID = 8
+
+function addon.Constants:Init()
+    addon.Constants.FONT = addon.LSM:Fetch("font", "2002") or "Fonts\\2002.TTF"
+end

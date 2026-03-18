@@ -1,19 +1,16 @@
 local addonName, addon = ...
 
-addon.RunHistoryUI     = addon.RunHistoryUI or {}
+addon.RunHistoryUI = addon.RunHistoryUI or {}
 
-local LST              = LibStub and LibStub("ScrollingTable")
-local LSM              = LibStub and LibStub("LibSharedMedia-3.0", true)
-local FONT_2002        = (LSM and LSM:Fetch("font", "2002")) or "Fonts\\2002.TTF"
-local COMPLETED_INDEX  = 3
-local RUNNER_INDEX     = 4
+local COMPLETED_INDEX = 3
+local RUNNER_INDEX = 4
 
 local function SetFont(fontString, desiredSize)
     local _, size, flags = fontString:GetFont()
     if desiredSize then
         size = desiredSize
     end
-    fontString:SetFont(FONT_2002, size, flags)
+    fontString:SetFont(addon.Constants.FONT, size, flags)
 end
 
 local function FormatRunDate(timestamp)
@@ -60,7 +57,7 @@ local function CompareRowValues(tableFrame, rowa, rowb, sortby, valueGetter)
     end
     local column = tableFrame.cols[sortby]
     local direction = column.sort or column.defaultsort
-    if direction == LST.SORT_ASC then
+    if direction == addon.LST.SORT_ASC then
         return aValue < bValue
     end
     return aValue > bValue
@@ -130,8 +127,8 @@ local function BuildColumns()
             width = 180,
             align = "LEFT",
             index = 1,
-            sort = LST.SORT_DSC,
-            defaultsort = LST.SORT_DSC,
+            sort = addon.LST.SORT_DSC,
+            defaultsort = addon.LST.SORT_DSC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
                 return CompareRowValues(tableFrame, rowa, rowb, sortby, function(row)
                     return row.run.startTimestamp or 0
@@ -143,7 +140,7 @@ local function BuildColumns()
             width = 120,
             align = "RIGHT",
             index = 2,
-            defaultsort = LST.SORT_ASC,
+            defaultsort = addon.LST.SORT_ASC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
                 return CompareRowValues(tableFrame, rowa, rowb, sortby, function(row)
                     return row.run.duration or 0
@@ -155,7 +152,7 @@ local function BuildColumns()
             width = 120,
             align = "RIGHT",
             index = COMPLETED_INDEX,
-            defaultsort = LST.SORT_DSC,
+            defaultsort = addon.LST.SORT_DSC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
                 return CompareRowValues(tableFrame, rowa, rowb, sortby, function(row)
                     return row.run.completed and 1 or 0
@@ -167,7 +164,7 @@ local function BuildColumns()
             width = 140,
             align = "RIGHT",
             index = RUNNER_INDEX,
-            defaultsort = LST.SORT_ASC,
+            defaultsort = addon.LST.SORT_ASC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
                 return CompareRowValues(tableFrame, rowa, rowb, sortby, function(row)
                     local runnerName = row.run.runner and row.run.runner.name or ""
@@ -224,7 +221,7 @@ function addon.RunHistoryUI:Init()
 
     UIDropDownMenu_Initialize(dropdown, function(_, level)
         local fontObject = CreateFont("ChallengeModeTimerDropdownFontObject")
-        fontObject:SetFont(FONT_2002, 12, "")
+        fontObject:SetFont(addon.Constants.FONT, 12, "")
         for _, instanceId in ipairs(self.instanceIds) do
             local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
             local info        = UIDropDownMenu_CreateInfo()
@@ -245,7 +242,7 @@ function addon.RunHistoryUI:CreateTable()
     local columns = BuildColumns()
 
     local rowHeight = 20
-    local tableFrame = LST:CreateST(columns, 10, rowHeight, nil, self.runsFrame, false)
+    local tableFrame = addon.LST:CreateST(columns, 10, rowHeight, nil, self.runsFrame, false)
     tableFrame.frame:SetPoint("TOPLEFT", self.dropdown, "BOTTOMLEFT", 0, -20)
     tableFrame.frame:SetPoint("BOTTOMRIGHT", self.runsFrame, "BOTTOMRIGHT", 0, 0)
 
