@@ -57,6 +57,7 @@ local function InitializeAddon()
     addon.RunHistory:Init()
     addon.RunUI:Init()
     addon.Run:Init()
+    EnsureUIIsInitialized()
 
     SLASH_CHALLENGEMODETIMER1 = "/cmt"
     SlashCmdList["CHALLENGEMODETIMER"] = OnSlashCommand

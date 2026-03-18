@@ -35,8 +35,12 @@ function addon.OptionsUI:Init()
         optionsFrame:StopMovingOrSizing()
     end)
     optionsFrame:Hide()
-    
+
     self.optionsFrame = optionsFrame
+
+    local closeButton = CreateFrame("Button", nil, optionsFrame, "UIPanelCloseButton")
+    closeButton:SetPoint("TOPRIGHT", optionsFrame, "TOPRIGHT", -4, -4)
+    self.closeButton = closeButton
 
     local function CreateTab(index, text)
         local tab = CreateFrame("Button", optionsFrame:GetName() .. "Tab" .. index, optionsFrame,
