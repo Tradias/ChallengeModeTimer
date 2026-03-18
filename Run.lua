@@ -137,18 +137,18 @@ local function ChangeRunning(run, isRunning)
     end
 end
 
-local function OnRunStart(run, worldElapsedTime)
+local function OnRunStart(run)
     run.state.active = true
-    run.startTimestamp = time() - worldElapsedTime
-    run.runners = BuildRunners()
     UpdateCriteriaSplits()
 end
 
 local function MaybeStartNewRun(run, worldElapsedTime)
     if not run.state.active then
-        OnRunStart(run, worldElapsedTime)
+        OnRunStart(run)
     end
     ChangeRunning(run, true)
+    run.startTimestamp = time() - worldElapsedTime
+    run.runners = BuildRunners()
     addon.RunUI:Show()
 end
 
