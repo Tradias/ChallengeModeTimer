@@ -40,7 +40,7 @@ function addon.RunHistory:PersistActiveRun(instanceId)
     local runs = GetRunHistory(instanceId).runs
     local activeRun = runs[#runs]
     if not HasAtLeastOneCompletedSplit(activeRun) then
-        activeRun = addon.Run:CreateRun(instanceId)
+        runs[#runs] = addon.Run:CreateRun(instanceId)
         return
     end
     activeRun.state = nil
