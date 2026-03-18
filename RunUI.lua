@@ -123,9 +123,11 @@ function addon.RunUI:Init()
     self.timerText = CreateTimerText(runFrame)
     self:UpdateTimerText(0)
 
+    self.run = addon.Run:CreateRun(1004)
+
     runFrame:SetScript("OnUpdate", function(frame, elapsed)
-        local run = addon.Run:Get()
-        if not run or not run.state.running or run.state.startTime == 0 then
+        local run = self.run
+        if not run.state.running or run.state.startTime == 0 then
             return
         end
         frame.timeSinceLastUpdate = frame.timeSinceLastUpdate + elapsed
@@ -176,16 +178,14 @@ function addon.RunUI:SetMoveMode(enabled)
 
     if enabled then
         self.wasShownBeforeMove = self.runFrame:IsShown()
-        if not addon.Run:Get() then
-            addon.Run:SetSampleRun()
-        end
+        addon.Run:SetSampleRun()
         self:Show()
     else
         SaveRunUIPosition(self.runFrame)
-        addon.Run:UnsetSampleRun()
         if not self.wasShownBeforeMove then
             self:Hide()
         end
+        addon.Run:UnsetSampleRun()
     end
 end
 
@@ -198,7 +198,7 @@ function addon.RunUI:ToggleMoveMode()
 end
 
 function addon.RunUI:UpdateSplits()
-    local run = addon.Run:Get()
+    local run = self.run
     if not run then
         return
     end
@@ -268,13 +268,14 @@ function addon.RunUI:UpdateSplits()
     self.splitFrame:SetHeight(#run.splits * lineHeight)
 end
 
-function addon.RunUI:Show()
+function addon.RunUI:SetRun(run)
+    self.run = run
     addon.RunUI:UpdateSplits()
-    local run = addon.Run:Get()
-    if run then
-        self:UpdateTimerText(run.duration)
-    end
+    self:UpdateTimerText(self.run.duration)
     self.runFrame.timeSinceLastUpdate = 0
+end
+
+function addon.RunUI:Show()
     self.runFrame:Show()
 end
 

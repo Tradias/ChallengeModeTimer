@@ -27,7 +27,7 @@ function addon.RunHistory:Init()
     end
 end
 
-function addon.RunHistory:GetActiveRun(instanceId)
+function addon.RunHistory:GetCurrentRun(instanceId)
     local runHistory = GetRunHistory(instanceId)
     if not runHistory then
         return nil
@@ -36,16 +36,29 @@ function addon.RunHistory:GetActiveRun(instanceId)
     return runs[#runs]
 end
 
-function addon.RunHistory:PersistActiveRun(instanceId)
+function addon.RunHistory:GetPreviousRun(instanceId)
+    local runHistory = GetRunHistory(instanceId)
+    if not runHistory then
+        return nil
+    end
+    local runs = runHistory.runs
+    if #runs > 1 then
+        return runs[#runs - 1]
+    end
+end
+
+function addon.RunHistory:PersistCurrentRun(instanceId)
     local runs = GetRunHistory(instanceId).runs
     local activeRun = runs[#runs]
-    if not HasAtLeastOneCompletedSplit(activeRun) then
-        runs[#runs] = addon.Run:CreateRun(instanceId)
-        return
+    local nextRun = addon.Run:CreateRun(instanceId)
+    if HasAtLeastOneCompletedSplit(activeRun) then
+        activeRun.state = nil
+        table.insert(runs, nextRun)
+        addon.RunHistoryUI:Refresh()
+    else
+        runs[#runs] = nextRun
     end
-    activeRun.state = nil
-    table.insert(runs, addon.Run:CreateRun(instanceId))
-    addon.RunHistoryUI:Refresh()
+    return nextRun
 end
 
 function addon.RunHistory:GetHistoricalRuns(instanceId)
@@ -85,9 +98,10 @@ function addon.RunHistory:InsertSampleRuns()
             return runTime + math.random()
         end
 
-        self:Add(addon.Run:CreateSampleRun(instanceId, SaltRunTime(slowerTime), true, 86400 * 3))
-        self:Add(addon.Run:CreateSampleRun(instanceId, SaltRunTime(fasterTime), true, 3600 * 12))
-        self:Add(addon.Run:CreateSampleRun(instanceId, SaltRunTime(partialTime), false, 3600))
+        local runs = GetRunHistory(instanceId).runs
+        table.insert(runs, 1, addon.Run:CreateSampleRun(instanceId, SaltRunTime(partialTime), false, 3600))
+        table.insert(runs, 1, addon.Run:CreateSampleRun(instanceId, SaltRunTime(fasterTime), true, 3600 * 12))
+        table.insert(runs, 1, addon.Run:CreateSampleRun(instanceId, SaltRunTime(slowerTime), true, 86400 * 3))
 
         self:SetComparisonRunIndex(instanceId, 1)
     end

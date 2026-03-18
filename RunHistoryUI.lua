@@ -309,13 +309,15 @@ end
 function addon.RunHistoryUI:BuildRows(instanceId)
     local runs, runCount = addon.RunHistory:GetHistoricalRuns(instanceId)
     local rows = {}
-    for index, run in ipairs(runs) do
-        rows[index] = {
-            run = run,
-            cols = BuildRowValues(run)
-        }
-        if index == runCount then
-            break
+    if runCount > 0 then
+        for index, run in ipairs(runs) do
+            rows[index] = {
+                run = run,
+                cols = BuildRowValues(run)
+            }
+            if index == runCount then
+                break
+            end
         end
     end
     return rows

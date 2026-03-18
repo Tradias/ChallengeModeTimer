@@ -8,7 +8,7 @@ addon.Run = addon.Run or {}
 local g_eventFrame = nil
 local g_sampleRun = nil
 local g_currentRun = nil
-local g_currentInstanceId = nil
+local g_currentInstanceId = 0
 local g_timerCalibrationTicker = nil
 
 local function CreateRunSplits(run)
@@ -17,6 +17,16 @@ local function CreateRunSplits(run)
     for _, _ in ipairs(splitProfile.splits) do
         table.insert(run.splits, addon.SplitProfile:CreateSplit())
     end
+end
+
+local function CreateRunState(instanceId)
+    return {
+        instanceId = instanceId,
+        active = false,
+        running = false,
+        startTime = 0,                -- GetTime()
+        lastSeenWorldElapsedTime = 0, -- GetWorldElapsedTime(1)
+    }
 end
 
 local function InActiveChallengeMode()
@@ -39,7 +49,7 @@ local function SetStartTime(run, startTime)
 end
 
 local function UpdateCriteriaSplits()
-    local run = addon.RunHistory:GetActiveRun(g_currentInstanceId)
+    local run = addon.RunHistory:GetCurrentRun(g_currentInstanceId)
     local splitProfile = addon.SplitProfile:Get(g_currentInstanceId)
     for index, split in ipairs(run.splits) do
         local splitDefinition = splitProfile.splits[index]
@@ -71,12 +81,31 @@ local function BuildRunner()
     }
 end
 
+local function SetCurrentRun(run)
+    g_currentRun = run
+    addon.RunUI:SetRun(g_currentRun)
+end
+
+local function SetCurrentIfActiveOrPreviousRun(run)
+    if run.state.active then
+        SetCurrentRun(run)
+        return
+    end
+    local previousRun = addon.RunHistory:GetPreviousRun(run.state.instanceId)
+    if previousRun then
+        previousRun = addon.Utility:ShallowClone(previousRun)
+        previousRun.state = CreateRunState(run.state.instanceId)
+        SetCurrentRun(previousRun)
+    else
+        SetCurrentRun(run)
+    end
+end
+
 local function OnRunStart(run, worldElapsedTime)
     run.state.active = true
     run.startTimestamp = time() - worldElapsedTime
     run.runner = BuildRunner()
     UpdateCriteriaSplits()
-    addon.RunUI:Show()
 end
 
 local function MaybeStartNewRun(run, worldElapsedTime)
@@ -84,6 +113,7 @@ local function MaybeStartNewRun(run, worldElapsedTime)
     if not run.state.active then
         OnRunStart(run, worldElapsedTime)
     end
+    addon.RunUI:Show()
 end
 
 local function CancelTimerCalibration()
@@ -107,6 +137,7 @@ local function OnTimerCalibrationTick(run)
 end
 
 local function StartTimerCalibration(run)
+    SetCurrentRun(run)
     local worldElapsedTime = WoWGetWorldElapsedTime()
     if worldElapsedTime == 0 then
         SetStartTime(run, GetTime())
@@ -122,14 +153,22 @@ local function StartTimerCalibration(run)
 end
 
 local function OnRunEnd(run, challengeCompletionInfo)
+    run.state.active = false
     CancelTimerCalibration()
     local instanceId = run.state.instanceId
     if challengeCompletionInfo then
         run.completed = true
         run.duration = challengeCompletionInfo.time / 1000
     end
-    addon.RunHistory:PersistActiveRun(instanceId)
-    g_currentRun = nil
+    local nextRun = addon.RunHistory:PersistCurrentRun(instanceId)
+    SetCurrentIfActiveOrPreviousRun(nextRun)
+end
+
+local function MaybeEndRun(run, challengeCompletionInfo)
+    run.state.running = false
+    if run.state.active then
+        OnRunEnd(run, challengeCompletionInfo)
+    end
 end
 
 -- ============================================================================
@@ -138,24 +177,22 @@ end
 
 local function OnChallengeModeReset()
     -- Also fired when starting a CM.
-    local run = addon.RunHistory:GetActiveRun(g_currentInstanceId)
+    local run = addon.RunHistory:GetCurrentRun(g_currentInstanceId)
     if not run then
         print("Challenge reset outside of dungeon - please report bug")
         return
     end
-    if run.state.active then
-        OnRunEnd(run)
-    end
+    MaybeEndRun(run)
 end
 
 local function OnChallengeModeCompleted()
-    local run = addon.RunHistory:GetActiveRun(g_currentInstanceId)
+    local run = addon.RunHistory:GetCurrentRun(g_currentInstanceId)
     if not run then
         print("Challenge completed outside of dungeon - please report bug")
         DevTools_Dump(C_ChallengeMode.GetChallengeCompletionInfo())
         return
     end
-    OnRunEnd(run, C_ChallengeMode.GetChallengeCompletionInfo())
+    MaybeEndRun(run, C_ChallengeMode.GetChallengeCompletionInfo())
 end
 
 local function OnPlayerEnteringWorld(isInitialLogin, isReloadUI)
@@ -165,7 +202,7 @@ local function OnPlayerEnteringWorld(isInitialLogin, isReloadUI)
     local dungeonName, instanceType, difficultyId, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceId =
         GetInstanceInfo()
     g_currentInstanceId = instanceId
-    local run = addon.RunHistory:GetActiveRun(instanceId)
+    local run = addon.RunHistory:GetCurrentRun(instanceId)
     if not run then
         if g_currentRun and g_currentRun.state.running then
             addon.RunUI:Show()
@@ -174,11 +211,11 @@ local function OnPlayerEnteringWorld(isInitialLogin, isReloadUI)
         end
         return
     end
-    g_currentRun = run
     run.state.running = false
     if isReloadUI and InActiveChallengeMode() then
         StartTimerCalibration(run)
     else
+        SetCurrentIfActiveOrPreviousRun(run)
         addon.RunUI:Show()
     end
 end
@@ -201,7 +238,7 @@ local function OnWorldStateTimerStart()
         GetInstanceInfo()
     g_currentInstanceId = instanceId
     if difficultyId == addon.Constants.CHALLENGE_MODE_DIFFICULTY_ID then
-        StartTimerCalibration(addon.RunHistory:GetActiveRun(instanceId))
+        StartTimerCalibration(addon.RunHistory:GetCurrentRun(instanceId))
     end
 end
 
@@ -226,13 +263,7 @@ function addon.Run:Init()
 end
 
 function addon.Run:Get()
-    if g_currentRun then
-        return g_currentRun
-    end
-    if not g_currentInstanceId then
-        return nil
-    end
-    return addon.RunHistory:GetActiveRun(g_currentInstanceId)
+    return g_currentRun
 end
 
 function addon.Run:SetDurationFromNow(run)
@@ -241,13 +272,7 @@ end
 
 function addon.Run:CreateRun(instanceId)
     local run = {
-        state = {
-            instanceId = instanceId,
-            active = false,
-            running = false,
-            startTime = 0,                -- GetTime()
-            lastSeenWorldElapsedTime = 0, -- GetWorldElapsedTime(1)
-        },
+        state = CreateRunState(instanceId),
         completed = false,
         startTimestamp = 0, -- time()
         duration = 0,       -- GetTime() - startTime
@@ -293,15 +318,15 @@ function addon.Run:SetSampleRun()
     local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
     local runTime = (dungeonData.medals and dungeonData.medals.gold) or 900
     runTime = runTime + math.random()
-    local previousRun = g_currentRun
-    g_currentRun = addon.Run:CreateSampleRun(instanceId, runTime, true, 86400 * 3)
-    g_currentRun.previousRun = previousRun
-    g_sampleRun = g_currentRun
+    local sampleRun = addon.Run:CreateSampleRun(instanceId, runTime, true, 86400 * 3)
+    sampleRun.previousRun = g_currentRun
+    g_sampleRun = sampleRun
+    SetCurrentRun(sampleRun)
 end
 
 function addon.Run:UnsetSampleRun()
     if g_sampleRun then
-        g_currentRun = g_sampleRun.previousRun
+        SetCurrentRun(g_sampleRun.previousRun)
         g_sampleRun = nil
     end
 end

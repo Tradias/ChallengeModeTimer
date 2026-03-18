@@ -16,3 +16,11 @@ function addon.Utility:FormatTime(seconds, precision)
     end
     return string.format("%d:%02d." .. tenthsFormatString, minutes, secs, tenths)
 end
+
+function addon.Utility:ShallowClone(t)
+    local t2 = {}
+    for k, v in pairs(t) do
+        t2[k] = v
+    end
+    return t2
+end
