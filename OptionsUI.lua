@@ -36,6 +36,11 @@ function addon.OptionsUI:Init()
     end)
     optionsFrame:Hide()
     
+    local closeHint = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    closeHint:SetPoint("TOPRIGHT", optionsFrame, "TOPRIGHT", -18, -12)
+    closeHint:SetText("right-click to close")
+    closeHint:SetTextColor(0.7, 0.7, 0.7, 1)
+
     self.optionsFrame = optionsFrame
 
     local function CreateTab(index, text)
