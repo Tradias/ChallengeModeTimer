@@ -60,6 +60,14 @@ local function SaveRunUIPosition(frame)
     }
 end
 
+local function GetRunUIScale()
+    return ChallengeModeTimerDB.runUIScale or 1
+end
+
+local function SaveRunUIScale(scale)
+    ChallengeModeTimerDB.runUIScale = scale
+end
+
 local function BuildSplitDifferenceTextAndColor(split, comparisonSplit)
     if split.completed and split.duration ~= 0 then
         if comparisonSplit and comparisonSplit.completed and comparisonSplit.duration ~= 0 then
@@ -112,6 +120,7 @@ function addon.RunUI:Init()
             savedPosition.y
         )
     end
+    runFrame:SetScale(GetRunUIScale())
     runFrame:SetFrameLevel(5000)
     runFrame:SetClampedToScreen(true)
     runFrame:SetMovable(true)
@@ -179,6 +188,20 @@ end
 
 function addon.RunUI:ToggleMoveMode()
     self:SetMoveMode(not self.moveModeEnabled)
+end
+
+function addon.RunUI:SetScale(scale)
+    if not scale then
+        return
+    end
+
+    local clampedScale = math.max(0.5, math.min(2, scale))
+    self.runFrame:SetScale(clampedScale)
+    SaveRunUIScale(clampedScale)
+end
+
+function addon.RunUI:GetScale()
+    return GetRunUIScale()
 end
 
 function addon.RunUI:UpdateSplits()
