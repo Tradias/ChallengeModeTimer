@@ -113,7 +113,7 @@ function addon.RunUI:Init()
             savedPosition.y
         )
     end
-    runFrame:SetFrameStrata("HIGH")
+    runFrame:SetFrameLevel(5000)
     runFrame:SetClampedToScreen(true)
     runFrame:SetMovable(true)
     runFrame:EnableMouse(false)
