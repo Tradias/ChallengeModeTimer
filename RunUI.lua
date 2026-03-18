@@ -183,10 +183,6 @@ end
 
 function addon.RunUI:UpdateSplits()
     local run = self.run
-    if not run then
-        return
-    end
-
     local comparisonRun = addon.RunHistory:GetComparisonRun(run.state.instanceId)
     local splitProfile = addon.SplitProfile:Get(run.state.instanceId)
 
