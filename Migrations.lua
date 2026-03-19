@@ -29,4 +29,8 @@ function addon.Migrations:Run()
     end
 
     ChallengeModeTimerDB.runUIScale = nil
+    if ChallengeModeTimerDB.runUIPosition then
+        ChallengeModeTimerDB.runUI = { position = ChallengeModeTimerDB.runUIPosition }
+        ChallengeModeTimerDB.runUIPosition = nil
+    end
 end

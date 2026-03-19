@@ -104,4 +104,7 @@ addon.Constants.CHALLENGE_MODE_DIFFICULTY_ID = 8
 
 function addon.Constants:Init()
     addon.Constants.FONT = addon.LSM:Fetch("font", "2002") or "Fonts\\2002.TTF"
+    local fontObject = CreateFont("ChallengeModeTimerDropdownFontObject")
+    fontObject:SetFont(addon.Constants.FONT, 12, "")
+    addon.Constants.FONT_OBJECT = fontObject
 end

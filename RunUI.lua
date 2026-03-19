@@ -47,28 +47,52 @@ local function CreateTimerText(runFrame)
 end
 
 local function GetTimerScale()
-    return ChallengeModeTimerDB.timerScale or 1
+    return ChallengeModeTimerDB.runUI.timerScale or 1
 end
 
 local function SaveTimerScale(scale)
-    ChallengeModeTimerDB.timerScale = scale
+    ChallengeModeTimerDB.runUI.timerScale = scale
 end
 
 local function GetSplitsScale()
-    return ChallengeModeTimerDB.splitsScale or 1
+    return ChallengeModeTimerDB.runUI.splitsScale or 1
 end
 
 local function SaveSplitsScale(scale)
-    ChallengeModeTimerDB.splitsScale = scale
+    ChallengeModeTimerDB.runUI.splitsScale = scale
+end
+
+local function GetSplitLabelXOffset()
+    return ChallengeModeTimerDB.runUI.splitLabelXOffset or -60
+end
+
+local function SaveSplitLabelXOffset(offset)
+    ChallengeModeTimerDB.runUI.splitLabelXOffset = offset
+end
+
+local function GetSplitDurationXOffset()
+    return ChallengeModeTimerDB.runUI.splitDurationXOffset or 60
+end
+
+local function SaveSplitDurationXOffset(offset)
+    ChallengeModeTimerDB.runUI.splitDurationXOffset = offset
+end
+
+local function GetSplitComparisonXOffset()
+    return ChallengeModeTimerDB.runUI.splitComparisonXOffset or 185
+end
+
+local function SaveSplitComparisonXOffset(offset)
+    ChallengeModeTimerDB.runUI.splitComparisonXOffset = offset
 end
 
 local function GetRunUIPosition()
-    return ChallengeModeTimerDB.runUIPosition
+    return ChallengeModeTimerDB.runUI.position
 end
 
 local function SaveRunUIPosition(frame)
     local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(1)
-    ChallengeModeTimerDB.runUIPosition = {
+    ChallengeModeTimerDB.runUI.position = {
         point = point,
         relativePoint = relativePoint,
         x = xOfs,
@@ -113,6 +137,10 @@ function addon.RunUI:UpdateTimerText(runDuration)
 end
 
 function addon.RunUI:Init()
+    if not ChallengeModeTimerDB.runUI then
+        ChallengeModeTimerDB.runUI = {}
+    end
+
     self.run = addon.Run:CreateRun(1004)
 
     local runFrame = CreateFrame("Frame", "ChallengeModeTimerRunFrame", UIParent)
@@ -148,7 +176,7 @@ function addon.RunUI:Init()
     timerFrame:SetHeight(self.timerText.secondsOnes:GetHeight())
 
     local splitsFrame = CreateFrame("Frame", nil, runFrame)
-    splitsFrame:SetPoint("TOP", timerFrame, "BOTTOM", 0, -6)
+    splitsFrame:SetPoint("TOP", timerFrame, "BOTTOM", 0, 0)
     splitsFrame:SetSize(runFrame:GetWidth(), 1)
     splitsFrame:EnableMouse(false)
     splitsFrame:RegisterForDrag("LeftButton")
@@ -207,9 +235,8 @@ function addon.RunUI:ToggleMoveMode()
 end
 
 function addon.RunUI:SetTimerScale(scale)
-    local clampedScale = math.max(0.5, math.min(2, scale))
-    self.timerFrame:SetScale(clampedScale)
-    SaveTimerScale(clampedScale)
+    self.timerFrame:SetScale(scale)
+    SaveTimerScale(scale)
 end
 
 function addon.RunUI:GetTimerScale()
@@ -217,13 +244,48 @@ function addon.RunUI:GetTimerScale()
 end
 
 function addon.RunUI:SetSplitsScale(scale)
-    local clampedScale = math.max(0.5, math.min(2, scale))
-    self.splitsFrame:SetScale(clampedScale)
-    SaveSplitsScale(clampedScale)
+    self.splitsFrame:SetScale(scale)
+    SaveSplitsScale(scale)
 end
 
 function addon.RunUI:GetSplitsScale()
     return GetSplitsScale()
+end
+
+function addon.RunUI:SetSplitLabelXOffset(offset)
+    SaveSplitLabelXOffset(offset)
+    for _, line in ipairs(self.splitLines) do
+        line.label:ClearAllPoints()
+        line.label:SetPoint("CENTER", line.frame, "CENTER", offset, 0)
+    end
+end
+
+function addon.RunUI:GetSplitLabelXOffset()
+    return GetSplitLabelXOffset()
+end
+
+function addon.RunUI:SetSplitDurationXOffset(offset)
+    SaveSplitDurationXOffset(offset)
+    for _, line in ipairs(self.splitLines) do
+        line.duration:ClearAllPoints()
+        line.duration:SetPoint("CENTER", line.frame, "CENTER", offset, 0)
+    end
+end
+
+function addon.RunUI:GetSplitDurationXOffset()
+    return GetSplitDurationXOffset()
+end
+
+function addon.RunUI:SetSplitComparisonXOffset(offset)
+    SaveSplitComparisonXOffset(offset)
+    for _, line in ipairs(self.splitLines) do
+        line.comparison:ClearAllPoints()
+        line.comparison:SetPoint("CENTER", line.frame, "CENTER", offset, 0)
+    end
+end
+
+function addon.RunUI:GetSplitComparisonXOffset()
+    return GetSplitComparisonXOffset()
 end
 
 function addon.RunUI:UpdateSplits()
@@ -232,30 +294,34 @@ function addon.RunUI:UpdateSplits()
     local splitProfile = addon.SplitProfile:Get(run.state.instanceId)
 
     local lineHeight = 20
+    local distanceFromTimer = 6
+    local labelXOffset = GetSplitLabelXOffset()
+    local durationXOffset = GetSplitDurationXOffset()
+    local comparisonXOffset = GetSplitComparisonXOffset()
     for index, split in ipairs(run.splits) do
         local line = self.splitLines[index]
         if not line then
             local lineFrame = CreateFrame("Frame", nil, self.splitsFrame)
-            lineFrame:SetPoint("TOPLEFT", self.splitsFrame, "TOPLEFT", 0, -(index - 1) * lineHeight)
+            lineFrame:SetPoint("TOPLEFT", self.splitsFrame, "TOPLEFT", 0, -(index - 1) * lineHeight - distanceFromTimer)
             lineFrame:SetSize(self.splitsFrame:GetWidth(), lineHeight)
 
             local label = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            label:SetPoint("LEFT", lineFrame, "LEFT", 0, 0)
+            label:SetPoint("CENTER", lineFrame, "CENTER", labelXOffset, 0)
             label:SetWidth(220)
-            label:SetJustifyH("RIGHT")
+            label:SetJustifyH("LEFT")
             label:SetFont(addon.Constants.FONT, 14, "OUTLINE")
 
             local duration = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            duration:SetPoint("RIGHT", lineFrame, "RIGHT", -15, 0)
+            duration:SetPoint("CENTER", lineFrame, "CENTER", durationXOffset, 0)
             duration:SetWidth(120)
             duration:SetJustifyH("RIGHT")
             duration:SetFont(addon.Constants.FONT, 14, "OUTLINE")
             duration:SetTextColor(1, 1, 1, 1)
 
             local comparison = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-            comparison:SetPoint("LEFT", duration, "RIGHT", 2, 0)
+            comparison:SetPoint("CENTER", lineFrame, "CENTER", comparisonXOffset, 0)
             comparison:SetWidth(120)
-            comparison:SetJustifyH("RIGHT")
+            comparison:SetJustifyH("LEFT")
             comparison:SetFont(addon.Constants.FONT, 14, "OUTLINE")
 
             line = {
@@ -272,7 +338,7 @@ function addon.RunUI:UpdateSplits()
         local currentQuantity = split.quantity
         local comparisonSplit = comparisonRun and comparisonRun.splits[index]
 
-        line.label:SetText(string.format("%s %d/%d", splitDefinition.name, currentQuantity, totalQuantity))
+        line.label:SetText(string.format("%d/%d %s", currentQuantity, totalQuantity, splitDefinition.name))
         if split.completed then
             line.label:SetTextColor(0.2, 1, 0.2, 1)
         else

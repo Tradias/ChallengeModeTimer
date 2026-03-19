@@ -223,13 +223,11 @@ function addon.RunHistoryUI:Init()
     self.table = self:CreateTable()
 
     UIDropDownMenu_Initialize(dropdown, function(_, level)
-        local fontObject = CreateFont("ChallengeModeTimerDropdownFontObject")
-        fontObject:SetFont(addon.Constants.FONT, 12, "")
         for _, instanceId in ipairs(self.instanceIds) do
             local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
             local info        = UIDropDownMenu_CreateInfo()
             info.text         = dungeonData.englishName
-            info.fontObject   = fontObject
+            info.fontObject   = addon.Constants.FONT_OBJECT
             info.noClickSound = true
             info.func         = function() self:SetSelectedInstance(instanceId) end
             UIDropDownMenu_AddButton(info, level)
