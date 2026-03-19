@@ -58,18 +58,20 @@ local function UpdateCriteriaSplits()
     for index, split in ipairs(run.splits) do
         local splitDefinition = splitProfile.splits[index]
         local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(splitDefinition.criteriaIndex)
-        if split.quantity < criteriaInfo.quantity then
-            split.quantity = criteriaInfo.quantity
-        end
-        if criteriaInfo.completed then
-            split.quantity = splitDefinition.totalQuantity
-        end
-        if not split.completed and criteriaInfo.completed then
-            split.completed = true
-            if run.state.startTime == 0 then
-                split.duration = WoWGetWorldElapsedTime() - criteriaInfo.elapsed
-            else
-                split.duration = RoundDuration(GetTime() - run.state.startTime - criteriaInfo.elapsed)
+        if criteriaInfo then
+            if split.quantity < criteriaInfo.quantity then
+                split.quantity = criteriaInfo.quantity
+            end
+            if criteriaInfo.completed then
+                split.quantity = splitDefinition.totalQuantity
+            end
+            if not split.completed and criteriaInfo.completed then
+                split.completed = true
+                if run.state.startTime == 0 then
+                    split.duration = WoWGetWorldElapsedTime() - criteriaInfo.elapsed
+                else
+                    split.duration = RoundDuration(GetTime() - run.state.startTime - criteriaInfo.elapsed)
+                end
             end
         end
     end
