@@ -41,9 +41,25 @@ local function CreateTimerText(runFrame)
     timerText.secondsTens:SetPoint("CENTER", runFrame, "CENTER", -15, 0)
     timerText.secondsOnes:SetPoint("CENTER", runFrame, "CENTER", 0, 0)
     timerText.dot:SetPoint("CENTER", runFrame, "CENTER", 9, 0)
-    timerText.milliseconds:SetPoint("CENTER", runFrame, "CENTER", 19, -2)
+    timerText.milliseconds:SetPoint("CENTER", runFrame, "CENTER", 19, -2.5)
     timerText.milliseconds:SetFont(addon.Constants.FONT, 13, "OUTLINE")
     return timerText
+end
+
+local function GetTimerScale()
+    return ChallengeModeTimerDB.timerScale or 1
+end
+
+local function SaveTimerScale(scale)
+    ChallengeModeTimerDB.timerScale = scale
+end
+
+local function GetSplitsScale()
+    return ChallengeModeTimerDB.splitsScale or 1
+end
+
+local function SaveSplitsScale(scale)
+    ChallengeModeTimerDB.splitsScale = scale
 end
 
 local function GetRunUIPosition()
@@ -58,14 +74,6 @@ local function SaveRunUIPosition(frame)
         x = xOfs,
         y = yOfs,
     }
-end
-
-local function GetRunUIScale()
-    return ChallengeModeTimerDB.runUIScale or 1
-end
-
-local function SaveRunUIScale(scale)
-    ChallengeModeTimerDB.runUIScale = scale
 end
 
 local function BuildSplitDifferenceTextAndColor(split, comparisonSplit)
@@ -105,6 +113,8 @@ function addon.RunUI:UpdateTimerText(runDuration)
 end
 
 function addon.RunUI:Init()
+    self.run = addon.Run:CreateRun(1004)
+
     local runFrame = CreateFrame("Frame", "ChallengeModeTimerRunFrame", UIParent)
     runFrame:Hide()
     runFrame:SetSize(RUN_UI_WIDTH, 25)
@@ -120,25 +130,31 @@ function addon.RunUI:Init()
             savedPosition.y
         )
     end
-    runFrame:SetScale(GetRunUIScale())
     runFrame:SetFrameLevel(5000)
     runFrame:SetClampedToScreen(true)
     runFrame:SetMovable(true)
     runFrame:EnableMouse(false)
     runFrame:RegisterForDrag("LeftButton")
 
-    self.timerText = CreateTimerText(runFrame)
+    local timerFrame = CreateFrame("Frame", nil, runFrame)
+    timerFrame:SetPoint("TOPLEFT", runFrame, "TOPLEFT", 0, 0)
+    timerFrame:SetPoint("TOPRIGHT", runFrame, "TOPRIGHT", 0, 0)
+    timerFrame:SetScale(GetTimerScale())
+    self.timerFrame = timerFrame
+
+    self.timerText = CreateTimerText(timerFrame)
     self:UpdateTimerText(0)
 
-    self.run = addon.Run:CreateRun(1004)
+    timerFrame:SetHeight(self.timerText.secondsOnes:GetHeight())
 
-    local splitFrame = CreateFrame("Frame", nil, runFrame)
-    splitFrame:SetPoint("TOP", runFrame, "BOTTOM", 0, -6)
-    splitFrame:SetSize(runFrame:GetWidth(), 1)
-    splitFrame:EnableMouse(false)
-    splitFrame:RegisterForDrag("LeftButton")
+    local splitsFrame = CreateFrame("Frame", nil, runFrame)
+    splitsFrame:SetPoint("TOP", timerFrame, "BOTTOM", 0, -6)
+    splitsFrame:SetSize(runFrame:GetWidth(), 1)
+    splitsFrame:EnableMouse(false)
+    splitsFrame:RegisterForDrag("LeftButton")
+    splitsFrame:SetScale(GetSplitsScale())
 
-    for _, frame in ipairs({ runFrame, splitFrame }) do
+    for _, frame in ipairs({ runFrame, splitsFrame }) do
         frame:SetScript("OnDragStart", function()
             if self.moveModeEnabled then
                 runFrame:StartMoving()
@@ -151,10 +167,10 @@ function addon.RunUI:Init()
         end)
     end
 
-    self.splitFrame = splitFrame
-    self.splitLines = {}
-
     self.runFrame = runFrame
+
+    self.splitsFrame = splitsFrame
+    self.splitLines = {}
 
     self.moveModeEnabled = false
     self.wasShownBeforeMove = false
@@ -167,7 +183,7 @@ function addon.RunUI:SetMoveMode(enabled)
 
     self.moveModeEnabled = enabled
     self.runFrame:EnableMouse(enabled)
-    self.splitFrame:EnableMouse(enabled)
+    self.splitsFrame:EnableMouse(enabled)
 
     if enabled then
         self.wasShownBeforeMove = self.runFrame:IsShown()
@@ -190,18 +206,24 @@ function addon.RunUI:ToggleMoveMode()
     self:SetMoveMode(not self.moveModeEnabled)
 end
 
-function addon.RunUI:SetScale(scale)
-    if not scale then
-        return
-    end
-
+function addon.RunUI:SetTimerScale(scale)
     local clampedScale = math.max(0.5, math.min(2, scale))
-    self.runFrame:SetScale(clampedScale)
-    SaveRunUIScale(clampedScale)
+    self.timerFrame:SetScale(clampedScale)
+    SaveTimerScale(clampedScale)
 end
 
-function addon.RunUI:GetScale()
-    return GetRunUIScale()
+function addon.RunUI:GetTimerScale()
+    return GetTimerScale()
+end
+
+function addon.RunUI:SetSplitsScale(scale)
+    local clampedScale = math.max(0.5, math.min(2, scale))
+    self.splitsFrame:SetScale(clampedScale)
+    SaveSplitsScale(clampedScale)
+end
+
+function addon.RunUI:GetSplitsScale()
+    return GetSplitsScale()
 end
 
 function addon.RunUI:UpdateSplits()
@@ -213,24 +235,27 @@ function addon.RunUI:UpdateSplits()
     for index, split in ipairs(run.splits) do
         local line = self.splitLines[index]
         if not line then
-            local lineFrame = CreateFrame("Frame", nil, self.splitFrame)
-            lineFrame:SetPoint("TOPLEFT", self.splitFrame, "TOPLEFT", 0, -(index - 1) * lineHeight)
-            lineFrame:SetSize(self.splitFrame:GetWidth(), lineHeight)
+            local lineFrame = CreateFrame("Frame", nil, self.splitsFrame)
+            lineFrame:SetPoint("TOPLEFT", self.splitsFrame, "TOPLEFT", 0, -(index - 1) * lineHeight)
+            lineFrame:SetSize(self.splitsFrame:GetWidth(), lineHeight)
 
             local label = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             label:SetPoint("LEFT", lineFrame, "LEFT", 0, 0)
-            label:SetJustifyH("LEFT")
+            label:SetWidth(220)
+            label:SetJustifyH("RIGHT")
             label:SetFont(addon.Constants.FONT, 14, "OUTLINE")
 
             local duration = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             duration:SetPoint("RIGHT", lineFrame, "RIGHT", -15, 0)
+            duration:SetWidth(120)
             duration:SetJustifyH("RIGHT")
             duration:SetFont(addon.Constants.FONT, 14, "OUTLINE")
             duration:SetTextColor(1, 1, 1, 1)
 
             local comparison = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             comparison:SetPoint("LEFT", duration, "RIGHT", 2, 0)
-            comparison:SetJustifyH("LEFT")
+            comparison:SetWidth(120)
+            comparison:SetJustifyH("RIGHT")
             comparison:SetFont(addon.Constants.FONT, 14, "OUTLINE")
 
             line = {
@@ -268,7 +293,7 @@ function addon.RunUI:UpdateSplits()
         self.splitLines[index].frame:Hide()
     end
 
-    self.splitFrame:SetHeight(#run.splits * lineHeight)
+    self.splitsFrame:SetHeight(#run.splits * lineHeight)
 end
 
 function addon.RunUI:SetRun(run)

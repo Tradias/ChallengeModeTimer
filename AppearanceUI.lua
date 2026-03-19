@@ -2,9 +2,24 @@ local addonName, addon = ...
 
 addon.AppearanceUI = addon.AppearanceUI or {}
 
+local function CreateSlider(parentFrame)
+    local slider = CreateFrame("Slider", nil, parentFrame, "OptionsSliderTemplate")
+    slider:SetWidth(200)
+    slider:SetObeyStepOnDrag(true)
+
+    local label = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    label:SetPoint("BOTTOMLEFT", slider, "TOPLEFT", 0, 4)
+
+    local text = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    text:SetPoint("LEFT", slider, "RIGHT", 8, 0)
+
+    return slider, label, text
+end
+
 function addon.AppearanceUI:Init()
     local appearanceFrame = addon.OptionsUI:GetAppearanceFrame()
 
+    -- Timer position
     local moveButton = CreateFrame("Button", nil, appearanceFrame, "UIPanelButtonTemplate")
     moveButton:SetSize(110, 24)
     moveButton:SetPoint("TOPLEFT", appearanceFrame, "TOPLEFT", 10, 0)
@@ -23,33 +38,42 @@ function addon.AppearanceUI:Init()
     end)
 
     UpdateMoveButtonText()
-    self.moveButton = moveButton
 
-    local scaleSlider = CreateFrame("Slider", nil, appearanceFrame, "OptionsSliderTemplate")
-    scaleSlider:SetPoint("TOPLEFT", moveButton, "BOTTOMLEFT", 0, -30)
-    scaleSlider:SetWidth(200)
-    scaleSlider:SetMinMaxValues(0.5, 2)
-    scaleSlider:SetValueStep(0.05)
-    scaleSlider:SetObeyStepOnDrag(true)
+    -- Timer scale
+    local timerScaleSlider, timerScaleLabel, timerScaleText = CreateSlider(appearanceFrame)
+    timerScaleSlider:SetPoint("TOPLEFT", moveButton, "BOTTOMLEFT", 0, -30)
+    timerScaleSlider:SetMinMaxValues(0.5, 2)
+    timerScaleSlider:SetValueStep(0.05)
+    timerScaleLabel:SetText("Timer scale")
 
-    local scaleLabel = appearanceFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    scaleLabel:SetPoint("BOTTOMLEFT", scaleSlider, "TOPLEFT", 0, 4)
-    scaleLabel:SetText("Scale")
-
-    local scaleValue = appearanceFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    scaleValue:SetPoint("LEFT", scaleSlider, "RIGHT", 8, 0)
-
-    local function UpdateScaleValueText(value)
-        scaleValue:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
+    local function UpdateTimerScaleText(value)
+        timerScaleText:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
     end
 
-    scaleSlider:SetScript("OnValueChanged", function(_, value)
-        UpdateScaleValueText(value)
-        addon.RunUI:SetScale(value)
+    timerScaleSlider:SetScript("OnValueChanged", function(_, value)
+        UpdateTimerScaleText(value)
+        addon.RunUI:SetTimerScale(value)
     end)
 
-    scaleSlider:SetValue(addon.RunUI:GetScale())
-    UpdateScaleValueText(scaleSlider:GetValue())
+    timerScaleSlider:SetValue(addon.RunUI:GetTimerScale())
+    UpdateTimerScaleText(timerScaleSlider:GetValue())
 
-    self.scaleSlider = scaleSlider
+    -- Splits scale
+    local splitsScaleSlider, splitsScaleLabel, splitsScaleText = CreateSlider(appearanceFrame)
+    splitsScaleSlider:SetPoint("TOPLEFT", timerScaleSlider, "BOTTOMLEFT", 0, -30)
+    splitsScaleSlider:SetMinMaxValues(0.5, 2)
+    splitsScaleSlider:SetValueStep(0.05)
+    splitsScaleLabel:SetText("Splits scale")
+
+    local function UpdateSplitsScaleText(value)
+        splitsScaleText:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
+    end
+
+    splitsScaleSlider:SetScript("OnValueChanged", function(_, value)
+        UpdateSplitsScaleText(value)
+        addon.RunUI:SetSplitsScale(value)
+    end)
+
+    splitsScaleSlider:SetValue(addon.RunUI:GetSplitsScale())
+    UpdateSplitsScaleText(splitsScaleSlider:GetValue())
 end

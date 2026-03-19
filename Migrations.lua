@@ -27,4 +27,6 @@ function addon.Migrations:Run()
             end
         end
     end
+
+    ChallengeModeTimerDB.runUIScale = nil
 end
