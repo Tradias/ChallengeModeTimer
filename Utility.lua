@@ -29,3 +29,19 @@ function addon.Utility:GetClassColorById(classId)
     local _, classToken = GetClassInfo(classId)
     return classToken and RAID_CLASS_COLORS and RAID_CLASS_COLORS[classToken]
 end
+
+function addon.Utility:ToggleDebugMode()
+    if not self.isDebugMode then
+        self.isDebugMode = true
+        print("Debug mode on")
+    else
+        self.isDebugMode = false
+        print("Debug mode off")
+    end
+end
+
+function addon.Utility:DebugPrint(text)
+    if self.isDebugMode then
+        print(text)
+    end
+end

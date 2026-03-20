@@ -16,7 +16,7 @@ local function SelectCurrentInstanceInRunHistory()
 end
 
 local function EnsureUIIsInitialized()
-    if addon.OptionsUI and addon.OptionsUI:Get() then
+    if addon.OptionsUI:Get() then
         return
     end
 
@@ -36,6 +36,9 @@ local function OnSlashCommand(msg)
     elseif msg == "test" then
         addon.Run:SetSampleRun()
         addon.RunUI:Show()
+        return
+    elseif msg == "debug" then
+        addon.Utility:ToggleDebugMode()
         return
     end
 

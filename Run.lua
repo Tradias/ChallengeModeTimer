@@ -25,13 +25,21 @@ local function CreateRunState(instanceId)
         active = false,
         running = false,
         startTime = 0,                -- GetTime()
+        isStartTimeAccurate = false,
         lastSeenWorldElapsedTime = 0, -- GetWorldElapsedTime(1)
+        pendingSplitUpdateIndices = {}
     }
 end
 
 local function InActiveChallengeMode()
     local _, _, timerType = GetWorldElapsedTime(1)
     return timerType == LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE
+end
+
+local function InChallengeMode()
+    -- Only works for CMs that have been started once after logging in
+    local scenarioType = select(10, C_Scenario.GetInfo())
+    return scenarioType == LE_SCENARIO_TYPE_CHALLENGE_MODE
 end
 
 local function WoWGetWorldElapsedTime()
@@ -50,32 +58,6 @@ end
 local function SetStartTime(run, startTime)
     run.state.startTime = startTime
     SetDurationFromNow(run)
-end
-
-local function UpdateCriteriaSplits()
-    local run = addon.RunHistory:GetCurrentRun(g_currentInstanceId)
-    local splitProfile = addon.SplitProfile:Get(g_currentInstanceId)
-    for index, split in ipairs(run.splits) do
-        local splitDefinition = splitProfile.splits[index]
-        local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(splitDefinition.criteriaIndex)
-        if criteriaInfo then
-            if split.quantity < criteriaInfo.quantity then
-                split.quantity = criteriaInfo.quantity
-            end
-            if criteriaInfo.completed then
-                split.quantity = splitDefinition.totalQuantity
-            end
-            if not split.completed and criteriaInfo.completed then
-                split.completed = true
-                if run.state.startTime == 0 then
-                    split.duration = WoWGetWorldElapsedTime() - criteriaInfo.elapsed
-                else
-                    split.duration = RoundDuration(GetTime() - run.state.startTime - criteriaInfo.elapsed)
-                end
-            end
-        end
-    end
-    addon.RunUI:UpdateSplits()
 end
 
 local function BuildRunners()
@@ -139,18 +121,97 @@ local function ChangeRunning(run, isRunning)
     end
 end
 
-local function OnRunStart(run)
-    run.state.active = true
-    UpdateCriteriaSplits()
+local function HasPendingSplitUpdate(run, index)
+    for _, splitUpdateIndex in ipairs(run.state.pendingSplitUpdateIndices) do
+        if splitUpdateIndex == index then
+            return true
+        end
+    end
+    return false
 end
 
-local function MaybeStartNewRun(run, worldElapsedTime)
-    if not run.state.active then
-        OnRunStart(run)
+local function AddPendingSplitUpdate(run, index)
+    if HasPendingSplitUpdate(run, index) then
+        return
     end
-    ChangeRunning(run, true)
+    table.insert(run.state.pendingSplitUpdateIndices, index)
+end
+
+local function UpdateSplit(run, split, splitDefinition)
+    local isUpdated = false
+    local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(splitDefinition.criteriaIndex)
+    if not criteriaInfo then
+        return isUpdated
+    end
+    addon.Utility:DebugPrint("split completed: " .. tostring(split.completed) .. " criteriaID: " ..
+        criteriaInfo.criteriaID ..
+        " completed: " ..
+        tostring(criteriaInfo.completed) ..
+        " elapsed: " ..
+        criteriaInfo.elapsed ..
+        "s/" ..
+        WoWGetWorldElapsedTime() ..
+        "s " ..
+        criteriaInfo.quantity ..
+        "/" ..
+        criteriaInfo.totalQuantity .. " run.state.isStartTimeAccurate: " .. tostring(run.state.isStartTimeAccurate))
+    if split.quantity < criteriaInfo.quantity then
+        isUpdated = true
+        split.quantity = criteriaInfo.quantity
+    end
+    if criteriaInfo.completed then
+        isUpdated = (split.quantity < splitDefinition.totalQuantity)
+        split.quantity = splitDefinition.totalQuantity
+    end
+    if not split.completed and criteriaInfo.completed then
+        if run.state.isStartTimeAccurate then
+            isUpdated = true
+            split.completed = true
+            split.duration = RoundDuration(GetTime() - run.state.startTime - criteriaInfo.elapsed)
+        else
+            AddPendingSplitUpdate(run, splitDefinition.criteriaIndex)
+        end
+    end
+    return isUpdated
+end
+
+local function UpdatePendingSplits(run)
+    local isUpdated = false
+    local splitProfile = addon.SplitProfile:Get(g_currentInstanceId)
+    local pendingSplitUpdateIndices = run.state.pendingSplitUpdateIndices
+    run.state.pendingSplitUpdateIndices = {}
+    for _, splitUpdateIndex in ipairs(pendingSplitUpdateIndices) do
+        isUpdated = UpdateSplit(run, run.splits[splitUpdateIndex], splitProfile.splits[splitUpdateIndex])
+    end
+    if isUpdated then
+        addon.RunUI:UpdateSplits()
+    end
+end
+
+local function UpdateCriteriaSplit(criteriaId)
+    local run = addon.RunHistory:GetCurrentRun(g_currentInstanceId)
+    local splitProfile = addon.SplitProfile:Get(g_currentInstanceId)
+    for index, splitDefinition in ipairs(splitProfile.splits) do
+        if splitDefinition.criteriaId == criteriaId then
+            return UpdateSplit(run, run.splits[index], splitDefinition)
+        end
+    end
+    for index, splitDefinition in ipairs(splitProfile.splits) do
+        if addon.SplitProfile:IsEnemyCount(splitDefinition) then
+            return UpdateSplit(run, run.splits[index], splitDefinition)
+        end
+    end
+    return false
+end
+
+local function OnRunStart(run, worldElapsedTime)
+    run.state.active = true
+    SetStartTime(run, GetTime() - worldElapsedTime)
+    run.state.isStartTimeAccurate = true
+    UpdatePendingSplits(run)
     run.startTimestamp = time() - worldElapsedTime
     run.runners = BuildRunners()
+    ChangeRunning(run, true)
     addon.RunUI:Show()
 end
 
@@ -161,9 +222,8 @@ local function OnTimerCalibrationTick(run)
         return
     end
     if worldElapsedTime > run.state.lastSeenWorldElapsedTime then
-        SetStartTime(run, GetTime() - worldElapsedTime)
         CancelTicker()
-        MaybeStartNewRun(run, worldElapsedTime)
+        OnRunStart(run, worldElapsedTime)
     end
 end
 
@@ -171,12 +231,11 @@ local function StartTimerCalibration(run)
     SetCurrentRun(run)
     local worldElapsedTime = WoWGetWorldElapsedTime()
     if worldElapsedTime == 0 then
-        SetStartTime(run, GetTime())
-        MaybeStartNewRun(run, worldElapsedTime)
+        OnRunStart(run, worldElapsedTime)
         return
     end
     CancelTicker()
-    SetStartTime(run, 0)
+    run.state.isStartTimeAccurate = false
     run.state.lastSeenWorldElapsedTime = worldElapsedTime
     g_ticker = C_Timer.NewTicker(0.1, (function() OnTimerCalibrationTick(run) end))
 end
@@ -248,15 +307,25 @@ local function OnPlayerEnteringWorld(isInitialLogin, isReloadUI)
     end
 end
 
+local function OnPlayerLeavingWorld()
+    local run = addon.RunHistory:GetCurrentRun(g_currentInstanceId)
+    if run then
+        run.state.isStartTimeAccurate = false
+    end
+end
+
 local function OnScenarioCriteriaUpdate(criteriaId)
     -- InActiveChallengeMode() will always be false when entering a dungeon.
     -- Fired when entering an active CM, usually before PLAYER_ENTERING_WORLD.
     -- difficultyId is always wrong when entering a dungeon.
+    -- criteriaId for enemy count cannot be relied upon, just assume that every id that cannot be matched to a boss is for enemy count.
     local dungeonName, instanceType, difficultyId, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceId =
         GetInstanceInfo()
     g_currentInstanceId = instanceId
-    if InActiveChallengeMode() then
-        UpdateCriteriaSplits()
+    addon.Utility:DebugPrint("OnScenarioCriteriaUpdate, criteriaId: " .. criteriaId .. " scenario type: " ..
+        select(10, C_Scenario.GetInfo()) .. " elapsed: " .. WoWGetWorldElapsedTime())
+    if InChallengeMode() and UpdateCriteriaSplit(criteriaId) then
+        addon.RunUI:UpdateSplits()
     end
 end
 
@@ -277,6 +346,7 @@ function addon.Run:Init()
         ["CHALLENGE_MODE_RESET"] = OnChallengeModeReset,
         ["CHALLENGE_MODE_COMPLETED"] = OnChallengeModeCompleted,
         ["PLAYER_ENTERING_WORLD"] = OnPlayerEnteringWorld,
+        ["PLAYER_LEAVING_WORLD"] = OnPlayerLeavingWorld,
         ["SCENARIO_CRITERIA_UPDATE"] = OnScenarioCriteriaUpdate,
         ["WORLD_STATE_TIMER_START"] = OnWorldStateTimerStart,
     }
@@ -286,6 +356,7 @@ function addon.Run:Init()
         g_eventFrame:RegisterEvent(key)
     end
     g_eventFrame:SetScript("OnEvent", function(_, event, ...)
+        addon.Utility:DebugPrint(event)
         EVENTS[event](...)
     end)
 end

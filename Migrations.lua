@@ -22,6 +22,16 @@ function addon.Migrations:Run()
                 end
             end
 
+            if #runs > 0 and runs[#runs].state then
+                local run = runs[#runs]
+                if not run.state.pendingSplitUpdateIndices then
+                    run.state.pendingSplitUpdateIndices = {}
+                end
+                if not run.state.isStartTimeAccurate then
+                    run.state.isStartTimeAccurate = false
+                end
+            end
+
             if #runs == 0 or not runs[#runs].state then
                 table.insert(runs, addon.Run:CreateRun(instanceId))
             end

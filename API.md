@@ -169,7 +169,7 @@ During active CM:
   description="Thalnos the Soulrender", 
   quantityString="1",
   elapsed=100,
-  duration=0,
+  duration=0, -- always 0
   isWeightedProgress=false,
   completed=true,
   quantity=1,
@@ -183,7 +183,7 @@ During active CM:
 
 ## C_ScenarioInfo.GetScenarioInfo()
 
-Inside CM dungeon, nil otherwise:
+Inside a once started CM dungeon, nil otherwise:
 
 [1]={
   type=1,
@@ -198,3 +198,4 @@ Inside CM dungeon, nil otherwise:
   area="UNKNOWN"
 }
 
+LE_SCENARIO_TYPE_CHALLENGE_MODE == 1
