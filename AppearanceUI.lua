@@ -45,6 +45,13 @@ local function CreateDropdown(parentFrame, labelText)
     return dropdown, label
 end
 
+local function CreateCheckbox(parentFrame, labelText)
+    local checkButton = CreateFrame("CheckButton", nil, parentFrame, "UICheckButtonTemplate")
+    checkButton.Text:SetText(labelText)
+    checkButton.Text:SetFontObject("GameFontNormal")
+    return checkButton
+end
+
 local function InitializeJustifyDropdown(dropdown, currentValue, onSelect)
     local options = {
         { text = "Left",   value = "LEFT" },
@@ -98,9 +105,17 @@ function addon.AppearanceUI:Init()
 
     UpdateMoveButtonText()
 
+    -- Medal time visibility
+    local showMedalTimeCheckbox = CreateCheckbox(appearanceFrame, "Show medal time")
+    showMedalTimeCheckbox:SetPoint("TOPLEFT", moveButton, "BOTTOMLEFT", -4, -8)
+    showMedalTimeCheckbox:SetChecked(addon.RunUI:GetShowMedalTime())
+    showMedalTimeCheckbox:SetScript("OnClick", function(button)
+        addon.RunUI:SetShowMedalTime(button:GetChecked())
+    end)
+
     -- Timer scale
     local timerScaleSlider, timerScaleLabel, timerScaleText = CreateSlider(appearanceFrame)
-    timerScaleSlider:SetPoint("TOPLEFT", moveButton, "BOTTOMLEFT", 0, -30)
+    timerScaleSlider:SetPoint("TOPLEFT", showMedalTimeCheckbox, "BOTTOMLEFT", 4, -25)
     timerScaleSlider:SetMinMaxValues(0.5, 2)
     timerScaleSlider:SetValueStep(0.05)
     timerScaleLabel:SetText("Timer scale")

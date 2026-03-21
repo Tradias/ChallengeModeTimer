@@ -138,6 +138,17 @@ local function SaveSplitComparisonJustifyH(justifyH)
     ChallengeModeTimerDB.runUI.splitComparisonJustifyH = justifyH
 end
 
+local function GetShowMedalTime()
+    if ChallengeModeTimerDB.runUI.showMedalTime == nil then
+        return true
+    end
+    return ChallengeModeTimerDB.runUI.showMedalTime
+end
+
+local function SaveShowMedalTime(enabled)
+    ChallengeModeTimerDB.runUI.showMedalTime = enabled
+end
+
 local function GetRunUIPosition()
     return ChallengeModeTimerDB.runUI.position
 end
@@ -215,12 +226,14 @@ function addon.RunUI:UpdateTimerText(runDuration)
     self.timerText.dot:SetText(dotText)
     self.timerText.milliseconds:SetText(tenthsText)
 
-    local medalText, medalR, medalG, medalB, medalA = BuildNextMedalText(
-        runDuration,
-        self.run.state.instanceId
-    )
-    self.medalText:SetText(medalText)
-    self.medalText:SetTextColor(medalR, medalG, medalB, medalA)
+    if self.showMedalTime then
+        local medalText, medalR, medalG, medalB, medalA = BuildNextMedalText(
+            runDuration,
+            self.run.state.instanceId
+        )
+        self.medalText:SetText(medalText)
+        self.medalText:SetTextColor(medalR, medalG, medalB, medalA)
+    end
 end
 
 function addon.RunUI:Init()
@@ -262,6 +275,7 @@ function addon.RunUI:Init()
     self.medalText = CreateMedalText(runFrame)
     self.medalText:SetPoint("RIGHT", runFrame, "RIGHT", 0, 0)
     self.medalText:SetPoint("CENTER", timerFrame, "CENTER", 0, 0)
+    self:SetShowMedalTime(GetShowMedalTime())
     self:UpdateTimerText(0)
 
     timerFrame:SetHeight(self.timerText.secondsOnes:GetHeight())
@@ -386,6 +400,22 @@ end
 
 function addon.RunUI:GetSplitComparisonJustifyH()
     return GetSplitComparisonJustifyH()
+end
+
+function addon.RunUI:SetShowMedalTime(isEnabled)
+    SaveShowMedalTime(isEnabled)
+    self.showMedalTime = isEnabled
+
+    if isEnabled then
+        self.medalText:Show()
+        self:UpdateTimerText(self.run.duration)
+    else
+        self.medalText:Hide()
+    end
+end
+
+function addon.RunUI:GetShowMedalTime()
+    return GetShowMedalTime()
 end
 
 function addon.RunUI:UpdateSplits()
