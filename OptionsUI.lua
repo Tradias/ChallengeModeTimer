@@ -68,10 +68,30 @@ function addon.OptionsUI:Init()
     appearanceFrame:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 10, -runsTab:GetHeight() - 20)
     appearanceFrame:SetPoint("BOTTOMRIGHT", optionsFrame, "BOTTOMRIGHT", -10, 10)
 
+    local function SetSampleRun(enabled)
+        if enabled == self.isSampleRunSet then
+            return
+        end
+
+        self.isSampleRunSet = enabled
+
+        if enabled then
+            self.wasRunUIShownBefore = addon.RunUI:IsShown()
+            addon.Run:SetSampleRun()
+            addon.RunUI:Show()
+        else
+            addon.Run:UnsetSampleRun()
+            if not self.wasRunUIShownBefore then
+                addon.RunUI:Hide()
+            end
+        end
+    end
+
     local function SelectTab(tabId)
         PanelTemplates_SetTab(optionsFrame, tabId)
         runsFrame:SetShown(tabId == 1)
         appearanceFrame:SetShown(tabId == 2)
+        SetSampleRun(tabId == 2)
     end
 
     runsTab:SetScript("OnClick", function()
@@ -82,11 +102,22 @@ function addon.OptionsUI:Init()
         SelectTab(2)
     end)
 
+    optionsFrame:SetScript("OnShow", function()
+        local selectedTab = PanelTemplates_GetSelectedTab(optionsFrame) or 1
+        SetSampleRun(selectedTab == 2)
+    end)
+
+    optionsFrame:SetScript("OnHide", function()
+        SetSampleRun(false)
+    end)
+
     SelectTab(1)
 
     self.runsFrame = runsFrame
     self.appearanceFrame = appearanceFrame
     self.tabs = { runsTab, appearanceTab }
+    self.isSampleRunSet = false
+    self.wasRunUIShownBefore = false
 end
 
 function addon.OptionsUI:Show()

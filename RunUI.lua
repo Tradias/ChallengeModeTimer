@@ -240,7 +240,6 @@ function addon.RunUI:Init()
     self.splitLines = {}
 
     self.moveModeEnabled = false
-    self.wasShownBeforeMove = false
 end
 
 function addon.RunUI:SetMoveMode(enabled)
@@ -252,16 +251,8 @@ function addon.RunUI:SetMoveMode(enabled)
     self.runFrame:EnableMouse(enabled)
     self.splitsFrame:EnableMouse(enabled)
 
-    if enabled then
-        self.wasShownBeforeMove = self.runFrame:IsShown()
-        addon.Run:SetSampleRun()
-        self:Show()
-    else
+    if not enabled then
         SaveRunUIPosition(self.runFrame)
-        if not self.wasShownBeforeMove then
-            self:Hide()
-        end
-        addon.Run:UnsetSampleRun()
     end
 end
 
@@ -430,6 +421,10 @@ end
 
 function addon.RunUI:Show()
     self.runFrame:Show()
+end
+
+function addon.RunUI:IsShown()
+    return self.runFrame:IsShown()
 end
 
 function addon.RunUI:Hide()
