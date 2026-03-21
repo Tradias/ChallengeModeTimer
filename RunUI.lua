@@ -45,7 +45,7 @@ end
 local function CreateTimerTextPart(runFrame)
     local timerText = runFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     timerText:SetTextColor(1, 1, 1, 1)
-    timerText:SetFont(addon.Constants.FONT, 22, "OUTLINE")
+    timerText:SetFont(addon.Constants.FONT, 21, "OUTLINE")
     return timerText
 end
 
