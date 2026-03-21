@@ -3,6 +3,20 @@ local addonName, addon = ...
 addon.RunUI = addon.RunUI or {}
 
 local RUN_UI_WIDTH = 300
+local MEDAL_LABELS = {
+    "Title",
+    "Platinum",
+    "Gold",
+    "Silver",
+    "Bronze"
+}
+local MEDAL_COLORS = {
+    { 0.2,  0.8,  1 },    -- title
+    { 0.9,  0.9,  1 },    -- platinum
+    { 1,    0.82, 0 },    -- gold
+    { 0.85, 0.85, 0.85 }, -- silver
+    { 0.8,  0.55, 0.25 }  -- bronze
+}
 
 local function FormatTimeParts(seconds)
     local minutes = math.floor(seconds / 60)
@@ -22,10 +36,16 @@ local function FormatTimeParts(seconds)
     return minutesText, secondsTensText, secondsOnesText, ".", string.format("%01d", tenths)
 end
 
+local function FormatMedalTime(seconds)
+    local minutes = math.floor(seconds / 60)
+    local secs = math.floor(seconds % 60)
+    return string.format("%d:%02d", minutes, secs)
+end
+
 local function CreateTimerTextPart(runFrame)
     local timerText = runFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     timerText:SetTextColor(1, 1, 1, 1)
-    timerText:SetFont(addon.Constants.FONT, 21, "OUTLINE")
+    timerText:SetFont(addon.Constants.FONT, 22, "OUTLINE")
     return timerText
 end
 
@@ -44,6 +64,14 @@ local function CreateTimerText(runFrame)
     timerText.milliseconds:SetPoint("CENTER", runFrame, "CENTER", 19, -2.5)
     timerText.milliseconds:SetFont(addon.Constants.FONT, 13, "OUTLINE")
     return timerText
+end
+
+local function CreateMedalText(runFrame)
+    local medalText = runFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    medalText:SetTextColor(1, 1, 1, 1)
+    medalText:SetFont(addon.Constants.FONT, 13, "OUTLINE")
+    medalText:SetJustifyH("RIGHT")
+    return medalText
 end
 
 local function GetTimerScale()
@@ -151,6 +179,19 @@ local function BuildSplitDurationText(split, comparisonSplit)
     return "-"
 end
 
+local function BuildNextMedalText(runDuration, instanceId)
+    local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
+    for index, medalTime in ipairs(dungeonData.medals) do
+        if runDuration < medalTime then
+            local label = MEDAL_LABELS[index] or ""
+            local timeText = FormatMedalTime(medalTime)
+            local color = MEDAL_COLORS[index] or { 1, 1, 1 }
+            return string.format("%s\n%s", label, timeText), color[1], color[2], color[3], 1
+        end
+    end
+    return "", 1, 1, 1, 1
+end
+
 local function SetSplitTextXOffset(splitLines, textKey, offset)
     for _, line in ipairs(splitLines) do
         local text = line[textKey]
@@ -173,6 +214,13 @@ function addon.RunUI:UpdateTimerText(runDuration)
     self.timerText.secondsOnes:SetText(secondsOnesText)
     self.timerText.dot:SetText(dotText)
     self.timerText.milliseconds:SetText(tenthsText)
+
+    local medalText, medalR, medalG, medalB, medalA = BuildNextMedalText(
+        runDuration,
+        self.run.state.instanceId
+    )
+    self.medalText:SetText(medalText)
+    self.medalText:SetTextColor(medalR, medalG, medalB, medalA)
 end
 
 function addon.RunUI:Init()
@@ -210,6 +258,9 @@ function addon.RunUI:Init()
     self.timerFrame = timerFrame
 
     self.timerText = CreateTimerText(timerFrame)
+    self.medalText = CreateMedalText(runFrame)
+    self.medalText:SetPoint("RIGHT", runFrame, "RIGHT", 0, 0)
+    self.medalText:SetPoint("CENTER", timerFrame, "CENTER", 0, 0)
     self:UpdateTimerText(0)
 
     timerFrame:SetHeight(self.timerText.secondsOnes:GetHeight())
