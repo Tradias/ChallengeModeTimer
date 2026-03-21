@@ -35,7 +35,7 @@ function addon.OptionsUI:Init()
         optionsFrame:StopMovingOrSizing()
     end)
     optionsFrame:Hide()
-    
+
     local closeHint = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     closeHint:SetPoint("TOPRIGHT", optionsFrame, "TOPRIGHT", -18, -12)
     closeHint:SetText("right-click to close")
@@ -111,13 +111,13 @@ function addon.OptionsUI:Init()
         SetSampleRun(false)
     end)
 
-    SelectTab(1)
-
     self.runsFrame = runsFrame
     self.appearanceFrame = appearanceFrame
     self.tabs = { runsTab, appearanceTab }
     self.isSampleRunSet = false
     self.wasRunUIShownBefore = false
+
+    SelectTab(1)
 end
 
 function addon.OptionsUI:Show()

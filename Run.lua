@@ -177,7 +177,7 @@ end
 
 local function UpdatePendingSplits(run)
     local isUpdated = false
-    local splitProfile = addon.SplitProfile:Get(g_currentInstanceId)
+    local splitProfile = addon.SplitProfile:Get(run.state.instanceId)
     local pendingSplitUpdateIndices = run.state.pendingSplitUpdateIndices
     run.state.pendingSplitUpdateIndices = {}
     for _, splitUpdateIndex in ipairs(pendingSplitUpdateIndices) do
@@ -412,13 +412,13 @@ function addon.Run:SetSampleRun()
     local sampleRun = addon.Run:CreateSampleRun(instanceId, runTime, true, 86400 * 3)
     sampleRun.previousRun = g_currentRun
     g_sampleRun = sampleRun
-    SetCurrentRun(sampleRun)
+    addon.RunUI:SetRun(g_sampleRun)
 end
 
 function addon.Run:UnsetSampleRun()
     if g_sampleRun then
         if g_sampleRun.previousRun then
-            SetCurrentRun(g_sampleRun.previousRun)
+            addon.RunUI:SetRun(g_sampleRun.previousRun)
         end
         g_sampleRun = nil
     end

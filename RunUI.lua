@@ -258,7 +258,7 @@ function addon.RunUI:Init()
     self.timerFrame = timerFrame
 
     self.timerText = CreateTimerText(timerFrame)
-    
+
     self.medalText = CreateMedalText(runFrame)
     self.medalText:SetPoint("RIGHT", runFrame, "RIGHT", 0, 0)
     self.medalText:SetPoint("CENTER", timerFrame, "CENTER", 0, 0)
@@ -467,7 +467,7 @@ end
 
 function addon.RunUI:SetRun(run)
     self.run = run
-    addon.RunUI:UpdateSplits()
+    self:UpdateSplits()
     self:UpdateTimerText(self.run.duration)
 end
 
