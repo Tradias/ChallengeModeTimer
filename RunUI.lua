@@ -86,6 +86,30 @@ local function SaveSplitComparisonXOffset(offset)
     ChallengeModeTimerDB.runUI.splitComparisonXOffset = offset
 end
 
+local function GetSplitLabelJustifyH()
+    return ChallengeModeTimerDB.runUI.splitLabelJustifyH or "LEFT"
+end
+
+local function SaveSplitLabelJustifyH(justifyH)
+    ChallengeModeTimerDB.runUI.splitLabelJustifyH = justifyH
+end
+
+local function GetSplitDurationJustifyH()
+    return ChallengeModeTimerDB.runUI.splitDurationJustifyH or "RIGHT"
+end
+
+local function SaveSplitDurationJustifyH(justifyH)
+    ChallengeModeTimerDB.runUI.splitDurationJustifyH = justifyH
+end
+
+local function GetSplitComparisonJustifyH()
+    return ChallengeModeTimerDB.runUI.splitComparisonJustifyH or "LEFT"
+end
+
+local function SaveSplitComparisonJustifyH(justifyH)
+    ChallengeModeTimerDB.runUI.splitComparisonJustifyH = justifyH
+end
+
 local function GetRunUIPosition()
     return ChallengeModeTimerDB.runUI.position
 end
@@ -125,6 +149,21 @@ local function BuildSplitDurationText(split, comparisonSplit)
         return addon.Utility:FormatTime(comparisonSplit.duration)
     end
     return "-"
+end
+
+local function SetSplitTextXOffset(splitLines, textKey, offset)
+    for _, line in ipairs(splitLines) do
+        local text = line[textKey]
+        text:ClearAllPoints()
+        text:SetPoint("CENTER", line.frame, "CENTER", offset, 0)
+    end
+end
+
+local function SetSplitTextJustifyH(splitLines, textKey, justifyH)
+    for _, line in ipairs(splitLines) do
+        local text = line[textKey]
+        text:SetJustifyH(justifyH)
+    end
 end
 
 function addon.RunUI:UpdateTimerText(runDuration)
@@ -254,10 +293,7 @@ end
 
 function addon.RunUI:SetSplitLabelXOffset(offset)
     SaveSplitLabelXOffset(offset)
-    for _, line in ipairs(self.splitLines) do
-        line.label:ClearAllPoints()
-        line.label:SetPoint("CENTER", line.frame, "CENTER", offset, 0)
-    end
+    SetSplitTextXOffset(self.splitLines, "label", offset)
 end
 
 function addon.RunUI:GetSplitLabelXOffset()
@@ -266,10 +302,7 @@ end
 
 function addon.RunUI:SetSplitDurationXOffset(offset)
     SaveSplitDurationXOffset(offset)
-    for _, line in ipairs(self.splitLines) do
-        line.duration:ClearAllPoints()
-        line.duration:SetPoint("CENTER", line.frame, "CENTER", offset, 0)
-    end
+    SetSplitTextXOffset(self.splitLines, "duration", offset)
 end
 
 function addon.RunUI:GetSplitDurationXOffset()
@@ -278,14 +311,38 @@ end
 
 function addon.RunUI:SetSplitComparisonXOffset(offset)
     SaveSplitComparisonXOffset(offset)
-    for _, line in ipairs(self.splitLines) do
-        line.comparison:ClearAllPoints()
-        line.comparison:SetPoint("CENTER", line.frame, "CENTER", offset, 0)
-    end
+    SetSplitTextXOffset(self.splitLines, "comparison", offset)
 end
 
 function addon.RunUI:GetSplitComparisonXOffset()
     return GetSplitComparisonXOffset()
+end
+
+function addon.RunUI:SetSplitLabelJustifyH(justifyH)
+    SaveSplitLabelJustifyH(justifyH)
+    SetSplitTextJustifyH(self.splitLines, "label", justifyH)
+end
+
+function addon.RunUI:GetSplitLabelJustifyH()
+    return GetSplitLabelJustifyH()
+end
+
+function addon.RunUI:SetSplitDurationJustifyH(justifyH)
+    SaveSplitDurationJustifyH(justifyH)
+    SetSplitTextJustifyH(self.splitLines, "duration", justifyH)
+end
+
+function addon.RunUI:GetSplitDurationJustifyH()
+    return GetSplitDurationJustifyH()
+end
+
+function addon.RunUI:SetSplitComparisonJustifyH(justifyH)
+    SaveSplitComparisonJustifyH(justifyH)
+    SetSplitTextJustifyH(self.splitLines, "comparison", justifyH)
+end
+
+function addon.RunUI:GetSplitComparisonJustifyH()
+    return GetSplitComparisonJustifyH()
 end
 
 function addon.RunUI:UpdateSplits()
@@ -298,6 +355,9 @@ function addon.RunUI:UpdateSplits()
     local labelXOffset = GetSplitLabelXOffset()
     local durationXOffset = GetSplitDurationXOffset()
     local comparisonXOffset = GetSplitComparisonXOffset()
+    local labelJustifyH = GetSplitLabelJustifyH()
+    local durationJustifyH = GetSplitDurationJustifyH()
+    local comparisonJustifyH = GetSplitComparisonJustifyH()
     for index, split in ipairs(run.splits) do
         local line = self.splitLines[index]
         if not line then
@@ -308,20 +368,20 @@ function addon.RunUI:UpdateSplits()
             local label = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             label:SetPoint("CENTER", lineFrame, "CENTER", labelXOffset, 0)
             label:SetWidth(220)
-            label:SetJustifyH("LEFT")
+            label:SetJustifyH(labelJustifyH)
             label:SetFont(addon.Constants.FONT, 14, "OUTLINE")
 
             local duration = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             duration:SetPoint("CENTER", lineFrame, "CENTER", durationXOffset, 0)
             duration:SetWidth(120)
-            duration:SetJustifyH("RIGHT")
+            duration:SetJustifyH(durationJustifyH)
             duration:SetFont(addon.Constants.FONT, 14, "OUTLINE")
             duration:SetTextColor(1, 1, 1, 1)
 
             local comparison = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             comparison:SetPoint("CENTER", lineFrame, "CENTER", comparisonXOffset, 0)
             comparison:SetWidth(120)
-            comparison:SetJustifyH("LEFT")
+            comparison:SetJustifyH(comparisonJustifyH)
             comparison:SetFont(addon.Constants.FONT, 14, "OUTLINE")
 
             line = {

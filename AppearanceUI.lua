@@ -31,6 +31,47 @@ local function CreateEditBox(parentFrame)
     return editBox, label
 end
 
+local function CreateDropdown(parentFrame)
+    local dropdown = CreateFrame("Frame", nil, parentFrame, "UIDropDownMenuTemplate")
+    local label = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    label:SetPoint("BOTTOMLEFT", dropdown, "TOPLEFT", 16, 4)
+
+    UIDropDownMenu_SetWidth(dropdown, 120)
+    UIDropDownMenu_JustifyText(dropdown, "LEFT")
+
+    return dropdown, label
+end
+
+local function InitializeJustifyDropdown(dropdown, currentValue, onSelect)
+    local options = {
+        { text = "Left", value = "LEFT" },
+        { text = "Center", value = "CENTER" },
+        { text = "Right", value = "RIGHT" },
+    }
+
+    UIDropDownMenu_Initialize(dropdown, function(_, level)
+        for _, option in ipairs(options) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = option.text
+            info.value = option.value
+            info.func = function()
+                UIDropDownMenu_SetSelectedValue(dropdown, option.value)
+                UIDropDownMenu_SetText(dropdown, option.text)
+                onSelect(option.value)
+            end
+            UIDropDownMenu_AddButton(info, level)
+        end
+    end)
+
+    UIDropDownMenu_SetSelectedValue(dropdown, currentValue)
+    for _, option in ipairs(options) do
+        if option.value == currentValue then
+            UIDropDownMenu_SetText(dropdown, option.text)
+            break
+        end
+    end
+end
+
 function addon.AppearanceUI:Init()
     local appearanceFrame = addon.OptionsUI:GetAppearanceFrame()
 
@@ -106,7 +147,7 @@ function addon.AppearanceUI:Init()
 
     -- Split duration X offset
     local splitDurationOffsetInput, splitDurationOffsetLabel = CreateEditBox(appearanceFrame)
-    splitDurationOffsetInput:SetPoint("TOPLEFT", splitLabelOffsetInput, "BOTTOMLEFT", 0, -40)
+    splitDurationOffsetInput:SetPoint("TOPLEFT", splitLabelOffsetInput, "BOTTOMLEFT", 0, -30)
     splitDurationOffsetInput:SetText(tostring(addon.RunUI:GetSplitDurationXOffset()))
     splitDurationOffsetInput:SetScript("OnTextChanged", function(editBox)
         local value = tonumber(editBox:GetText())
@@ -118,7 +159,7 @@ function addon.AppearanceUI:Init()
 
     -- Split comparison X offset
     local splitComparisonOffsetInput, splitComparisonOffsetLabel = CreateEditBox(appearanceFrame)
-    splitComparisonOffsetInput:SetPoint("TOPLEFT", splitDurationOffsetInput, "BOTTOMLEFT", 0, -40)
+    splitComparisonOffsetInput:SetPoint("TOPLEFT", splitDurationOffsetInput, "BOTTOMLEFT", 0, -30)
     splitComparisonOffsetInput:SetText(tostring(addon.RunUI:GetSplitComparisonXOffset()))
     splitComparisonOffsetInput:SetScript("OnTextChanged", function(editBox)
         local value = tonumber(editBox:GetText())
@@ -127,4 +168,28 @@ function addon.AppearanceUI:Init()
         end
     end)
     splitComparisonOffsetLabel:SetText("Split comparison X offset")
+
+    -- Split label justification
+    local splitLabelJustifyDropdown, splitLabelJustifyLabel = CreateDropdown(appearanceFrame)
+    splitLabelJustifyDropdown:SetPoint("TOPLEFT", splitComparisonOffsetInput, "BOTTOMLEFT", -16, -30)
+    InitializeJustifyDropdown(splitLabelJustifyDropdown, addon.RunUI:GetSplitLabelJustifyH(), function(value)
+        addon.RunUI:SetSplitLabelJustifyH(value)
+    end)
+    splitLabelJustifyLabel:SetText("Split label justification")
+
+    -- Split duration justification
+    local splitDurationJustifyDropdown, splitDurationJustifyLabel = CreateDropdown(appearanceFrame)
+    splitDurationJustifyDropdown:SetPoint("TOPLEFT", splitLabelJustifyDropdown, "BOTTOMLEFT", 0, -24)
+    InitializeJustifyDropdown(splitDurationJustifyDropdown, addon.RunUI:GetSplitDurationJustifyH(), function(value)
+        addon.RunUI:SetSplitDurationJustifyH(value)
+    end)
+    splitDurationJustifyLabel:SetText("Split duration justification")
+
+    -- Split comparison justification
+    local splitComparisonJustifyDropdown, splitComparisonJustifyLabel = CreateDropdown(appearanceFrame)
+    splitComparisonJustifyDropdown:SetPoint("TOPLEFT", splitDurationJustifyDropdown, "BOTTOMLEFT", 0, -24)
+    InitializeJustifyDropdown(splitComparisonJustifyDropdown, addon.RunUI:GetSplitComparisonJustifyH(), function(value)
+        addon.RunUI:SetSplitComparisonJustifyH(value)
+    end)
+    splitComparisonJustifyLabel:SetText("Split comparison justification")
 end

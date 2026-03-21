@@ -417,7 +417,9 @@ end
 
 function addon.Run:UnsetSampleRun()
     if g_sampleRun then
-        SetCurrentRun(g_sampleRun.previousRun)
+        if g_sampleRun.previousRun then
+            SetCurrentRun(g_sampleRun.previousRun)
+        end
         g_sampleRun = nil
     end
 end
