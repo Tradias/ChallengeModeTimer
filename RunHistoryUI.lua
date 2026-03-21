@@ -187,6 +187,40 @@ local function BuildRowValues(run)
     }
 end
 
+local function CountCompletedSplits(run)
+    local count = 0
+    for _, split in ipairs(run.splits) do
+        if split.completed then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+local function FindBestFilteredRun(table)
+    if not table.filtered then
+        return
+    end
+    local index
+    local bestDuration
+    local bestCompletedSplitCount = 0
+    for _, realrow in ipairs(table.filtered) do
+        local rowData = table:GetRow(realrow)
+        local run = rowData.run
+        local duration = run.duration
+        local completedSplitCount = CountCompletedSplits(run)
+        if completedSplitCount > bestCompletedSplitCount then
+            bestDuration = duration
+            bestCompletedSplitCount = completedSplitCount
+            index = realrow
+        elseif completedSplitCount == bestCompletedSplitCount and (bestDuration == nil or duration < bestDuration) then
+            bestDuration = duration
+            index = realrow
+        end
+    end
+    return index
+end
+
 function addon.RunHistoryUI:Init()
     local runsFrame = addon.OptionsUI:GetRunsFrame()
     self.runsFrame = runsFrame
@@ -199,13 +233,13 @@ function addon.RunHistoryUI:Init()
     self.dropdown = dropdown
 
     local filterLabel = runsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    filterLabel:SetPoint("LEFT", dropdown, "RIGHT", 10, 0)
+    filterLabel:SetPoint("LEFT", dropdown, "RIGHT", 8, 3)
     filterLabel:SetText("Filter")
     SetFont(filterLabel, 12)
 
     local filterBox = CreateFrame("EditBox", nil, runsFrame, "InputBoxTemplate")
-    filterBox:SetSize(190, 20)
-    filterBox:SetPoint("LEFT", filterLabel, "RIGHT", 8, 0)
+    filterBox:SetSize(170, 20)
+    filterBox:SetPoint("LEFT", filterLabel, "RIGHT", 6, 0)
     filterBox:SetAutoFocus(false)
     SetFont(filterBox, 12)
     filterBox:SetScript("OnEnterPressed", function()
@@ -215,6 +249,15 @@ function addon.RunHistoryUI:Init()
     filterBox:SetScript("OnTextChanged", function()
         self.filterText = filterBox:GetText()
         self.table:SortData()
+    end)
+
+    local bestRunButton = CreateFrame("Button", nil, runsFrame, "UIPanelButtonTemplate")
+    bestRunButton:SetSize(80, filterBox:GetHeight())
+    bestRunButton:SetPoint("LEFT", filterBox, "RIGHT", 23, -1)
+    bestRunButton:SetText("Best run")
+    SetFont(bestRunButton:GetFontString(), 12)
+    bestRunButton:SetScript("OnClick", function()
+        self:SelectBestFilteredRun()
     end)
 
     self.instanceIds = BuildSortedInstanceIds()
@@ -343,6 +386,14 @@ function addon.RunHistoryUI:Refresh()
     local rows = self:BuildRows(self.selectedInstanceId)
     self.table:SetData(rows)
     self:SyncSelectionAndComparisonRun()
+end
+
+function addon.RunHistoryUI:SelectBestFilteredRun()
+    local index = FindBestFilteredRun(self.table)
+    if index then
+        self.table:SetSelection(index)
+        addon.RunHistory:SetComparisonRunIndex(self.selectedInstanceId, index)
+    end
 end
 
 function addon.RunHistoryUI:SetSelectedInstance(instanceId)
