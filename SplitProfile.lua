@@ -99,3 +99,9 @@ end
 function addon.SplitProfile:IsEnemyCount(splitDefinition)
     return splitDefinition.criteriaId == 0
 end
+
+function addon.SplitProfile:FormatSplitLabel(split, splitDefinition)
+    local totalQuantity = splitDefinition.totalQuantity
+    local currentQuantity = split.quantity
+    return string.format("%d/%d %s", currentQuantity, totalQuantity, splitDefinition.name)
+end

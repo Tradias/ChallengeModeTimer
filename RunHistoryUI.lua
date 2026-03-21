@@ -86,31 +86,29 @@ local function FilterRow(filterText, rowData)
     return false
 end
 
-local function ShowRunnersTooltip(cellFrame, run)
-    GameTooltip:SetOwner(cellFrame, "ANCHOR_RIGHT")
-    GameTooltip:SetText("Runners", 1, 0.82, 0)
-
+local function AddRunnerLinesToTooltip(run)
     for _, runner in ipairs(run.runners or {}) do
         local name = runner.name
         local classColor = addon.Utility:GetClassColorById(runner.classId)
         GameTooltip:AddLine(name, classColor.r, classColor.g, classColor.b)
     end
+end
+
+local function ShowRunnersTooltip(frame, run)
+    GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
+    GameTooltip:SetText("Runners", 1, 0.82, 0)
+
+    AddRunnerLinesToTooltip(run)
 
     GameTooltip:Show()
 end
 
-local function ShowRunSplitsTooltip(cellFrame, run, instanceId)
-    GameTooltip:SetOwner(cellFrame, "ANCHOR_RIGHT")
-    GameTooltip:SetText("Splits", 1, 0.82, 0)
-
+local function AddSplitLinesToTooltip(run, instanceId)
     local splitProfile = addon.SplitProfile:Get(instanceId)
-
     for index, split in ipairs(run.splits or {}) do
         local splitDefinition = splitProfile.splits[index]
         if splitDefinition then
-            local totalQuantity = splitDefinition.totalQuantity
-            local currentQuantity = split.quantity
-            local label = string.format("%s %d/%d", splitDefinition.name, currentQuantity, totalQuantity)
+            local label = addon.SplitProfile:FormatSplitLabel(split, splitDefinition)
             local durationText = BuildSplitDurationText(split)
             if split.completed then
                 GameTooltip:AddDoubleLine(label, durationText, 0.2, 1, 0.2, 1, 1, 1)
@@ -119,7 +117,67 @@ local function ShowRunSplitsTooltip(cellFrame, run, instanceId)
             end
         end
     end
+end
 
+local function ShowRunSplitsTooltip(frame, run, instanceId)
+    GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
+    GameTooltip:SetText("Splits", 1, 0.82, 0)
+
+    AddSplitLinesToTooltip(run, instanceId)
+
+    GameTooltip:Show()
+end
+
+local function CountCompletedSplits(run)
+    local count = 0
+    for _, split in ipairs(run.splits) do
+        if split.completed then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+local function FindBestFilteredRun(table)
+    if not table.filtered then
+        return
+    end
+    local index
+    local bestDuration
+    local bestCompletedSplitCount = 0
+    for _, realrow in ipairs(table.filtered) do
+        local rowData = table:GetRow(realrow)
+        local run = rowData.run
+        local duration = run.duration
+        local completedSplitCount = CountCompletedSplits(run)
+        if completedSplitCount > bestCompletedSplitCount then
+            bestDuration = duration
+            bestCompletedSplitCount = completedSplitCount
+            index = realrow
+        elseif completedSplitCount == bestCompletedSplitCount and (bestDuration == nil or duration < bestDuration) then
+            bestDuration = duration
+            index = realrow
+        end
+    end
+    return index
+end
+
+local function ShowBestRunTooltip(frame, table, instanceId)
+    local bestIndex = FindBestFilteredRun(table)
+    if not bestIndex then
+        return
+    end
+    local rowData = table:GetRow(bestIndex)
+    local run = rowData.run
+    GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
+    GameTooltip:SetText(addon.Utility:FormatTime(run.duration, 3), 1, 0.82, 0)
+    GameTooltip:AddLine(FormatRunDate(run.startTimestamp), 1, 1, 1)
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("Splits", 1, 0.82, 0)
+    AddSplitLinesToTooltip(run, instanceId)
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("Runners", 1, 0.82, 0)
+    AddRunnerLinesToTooltip(run)
     GameTooltip:Show()
 end
 
@@ -187,40 +245,6 @@ local function BuildRowValues(run)
     }
 end
 
-local function CountCompletedSplits(run)
-    local count = 0
-    for _, split in ipairs(run.splits) do
-        if split.completed then
-            count = count + 1
-        end
-    end
-    return count
-end
-
-local function FindBestFilteredRun(table)
-    if not table.filtered then
-        return
-    end
-    local index
-    local bestDuration
-    local bestCompletedSplitCount = 0
-    for _, realrow in ipairs(table.filtered) do
-        local rowData = table:GetRow(realrow)
-        local run = rowData.run
-        local duration = run.duration
-        local completedSplitCount = CountCompletedSplits(run)
-        if completedSplitCount > bestCompletedSplitCount then
-            bestDuration = duration
-            bestCompletedSplitCount = completedSplitCount
-            index = realrow
-        elseif completedSplitCount == bestCompletedSplitCount and (bestDuration == nil or duration < bestDuration) then
-            bestDuration = duration
-            index = realrow
-        end
-    end
-    return index
-end
-
 function addon.RunHistoryUI:Init()
     local runsFrame = addon.OptionsUI:GetRunsFrame()
     self.runsFrame = runsFrame
@@ -258,6 +282,12 @@ function addon.RunHistoryUI:Init()
     SetFont(bestRunButton:GetFontString(), 12)
     bestRunButton:SetScript("OnClick", function()
         self:SelectBestFilteredRun()
+    end)
+    bestRunButton:SetScript("OnEnter", function()
+        ShowBestRunTooltip(bestRunButton, self.table, self.selectedInstanceId)
+    end)
+    bestRunButton:SetScript("OnLeave", function()
+        GameTooltip:Hide()
     end)
 
     self.instanceIds = BuildSortedInstanceIds()

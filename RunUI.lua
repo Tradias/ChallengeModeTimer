@@ -467,17 +467,14 @@ function addon.RunUI:UpdateSplits()
         end
 
         local splitDefinition = splitProfile.splits[index]
-        local totalQuantity = splitDefinition.totalQuantity
-        local currentQuantity = split.quantity
-        local comparisonSplit = comparisonRun and comparisonRun.splits[index]
-
-        line.label:SetText(string.format("%d/%d %s", currentQuantity, totalQuantity, splitDefinition.name))
+        line.label:SetText(addon.SplitProfile:FormatSplitLabel(split, splitDefinition))
         if split.completed then
             line.label:SetTextColor(0.2, 1, 0.2, 1)
         else
             line.label:SetTextColor(1, 1, 1, 1)
         end
 
+        local comparisonSplit = comparisonRun and comparisonRun.splits[index]
         line.duration:SetText(BuildSplitDurationText(split, comparisonSplit))
 
         local differenceText, differenceR, differenceG, differenceB, differenceA = BuildSplitDifferenceTextAndColor(
