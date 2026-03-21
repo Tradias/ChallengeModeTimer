@@ -4,7 +4,7 @@ addon.OptionsUI = addon.OptionsUI or {}
 
 function addon.OptionsUI:Init()
     local optionsFrame = CreateFrame("Frame", "ChallengeModeTimerOptions", UIParent, "BackdropTemplate")
-    optionsFrame:SetSize(720, 570)
+    optionsFrame:SetSize(595, 570)
     optionsFrame:SetPoint("CENTER")
     optionsFrame:SetFrameStrata("DIALOG")
     optionsFrame:SetBackdrop({
@@ -17,8 +17,6 @@ function addon.OptionsUI:Init()
     })
     optionsFrame:SetBackdropColor(0.1, 0.1, 0.1, 0.95)
     optionsFrame:SetBackdropBorderColor(0.4, 0.4, 0.4, 1)
-    optionsFrame:SetResizable(true)
-    optionsFrame:SetResizeBounds(880, 650, 1200, 900)
     optionsFrame:EnableMouse(true)
     optionsFrame:SetMovable(true)
     optionsFrame:SetClampedToScreen(true)
