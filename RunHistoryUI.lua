@@ -348,7 +348,12 @@ function addon.RunHistoryUI:CreateTable()
     tableFrame:RegisterEvents({
         OnClick = function(rowFrame, cellFrame, data, cols, row, realrow, column, tableFrame, button)
             if button == "LeftButton" and realrow then
-                addon.RunHistory:SetComparisonRunIndex(self.selectedInstanceId, realrow)
+                local isAlreadySelected = (tableFrame:GetSelection() == realrow)
+                if isAlreadySelected then
+                    addon.RunHistory:SetComparisonRunIndex(self.selectedInstanceId, nil)
+                else
+                    addon.RunHistory:SetComparisonRunIndex(self.selectedInstanceId, realrow)
+                end
             end
             return false
         end,
@@ -398,9 +403,9 @@ function addon.RunHistoryUI:SyncSelectionAndComparisonRun()
     local comparisonRunIndex = addon.RunHistory:GetComparisonRunIndex(self.selectedInstanceId)
     if comparisonRunIndex then
         self.table:SetSelection(comparisonRunIndex)
-        return
+    else
+        self.table:ClearSelection()
     end
-    self.table:ClearSelection()
 end
 
 function addon.RunHistoryUI:Refresh()

@@ -164,8 +164,8 @@ local function SaveRunUIPosition(frame)
 end
 
 local function BuildSplitDifferenceTextAndColor(split, comparisonSplit)
-    if split.completed and split.duration ~= 0 then
-        if comparisonSplit and comparisonSplit.completed and comparisonSplit.duration ~= 0 then
+    if split.completed and split.duration ~= 0 and comparisonSplit then
+        if comparisonSplit.completed and comparisonSplit.duration ~= 0 then
             local difference = split.duration - comparisonSplit.duration
             local differenceText = addon.Utility:FormatTime(math.abs(difference))
             if difference > 0 then
