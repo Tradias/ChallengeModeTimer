@@ -1,15 +1,21 @@
 local addonName, addon = ...
 
 LoadAddOn("Blizzard_DebugTools")
---  DevTools_Dump()
 
 addon.Run = addon.Run or {}
 
-local g_eventFrame = nil
-local g_sampleRun = nil
+local g_runs = {}
 local g_currentRun = nil
 local g_currentInstanceId = 0
 local g_ticker = nil
+
+local function InitializeRuns()
+    for instanceId, _ in pairs(addon.Constants.CHALLENGE_MODE_DUNGEONS) do
+        local currentRun = addon.RunHistory:GetCurrentRun(instanceId)
+        -- Making a deep copy to ensure we are not hammering at ChallengeModeTimerDB while the run is running
+        g_runs[instanceId] = addon.Utility:DeepCopy(currentRun)
+    end
+end
 
 local function CreateRunSplits(run)
     run.splits = {}
@@ -87,7 +93,7 @@ local function SetCurrentIfActiveOrPreviousRun(run)
     end
     local previousRun = addon.RunHistory:GetPreviousRun(run.state.instanceId)
     if previousRun then
-        previousRun = addon.Utility:ShallowClone(previousRun)
+        previousRun = addon.Utility:DeepCopy(previousRun)
         previousRun.state = CreateRunState(run.state.instanceId)
         SetCurrentRun(previousRun)
     else
@@ -189,7 +195,7 @@ local function UpdatePendingSplits(run)
 end
 
 local function UpdateCriteriaSplit(criteriaId)
-    local run = addon.RunHistory:GetCurrentRun(g_currentInstanceId)
+    local run = g_runs[g_currentInstanceId]
     local splitProfile = addon.SplitProfile:Get(g_currentInstanceId)
     for index, splitDefinition in ipairs(splitProfile.splits) do
         if splitDefinition.criteriaId == criteriaId then
@@ -247,7 +253,9 @@ local function OnRunEnd(run, challengeCompletionInfo)
         run.completed = true
         run.duration = challengeCompletionInfo.time / 1000
     end
-    local nextRun = addon.RunHistory:PersistCurrentRun(instanceId)
+    local nextRun = addon.RunHistory:PersistCurrentRun(run)
+    nextRun = addon.Utility:DeepCopy(nextRun)
+    g_runs[instanceId] = nextRun
     SetCurrentIfActiveOrPreviousRun(nextRun)
 end
 
@@ -264,7 +272,7 @@ end
 
 local function OnChallengeModeReset()
     -- Also fired when starting a CM.
-    local run = addon.RunHistory:GetCurrentRun(g_currentInstanceId)
+    local run = g_runs[g_currentInstanceId]
     if not run then
         print("Challenge reset outside of dungeon - please report bug")
         return
@@ -273,7 +281,7 @@ local function OnChallengeModeReset()
 end
 
 local function OnChallengeModeCompleted()
-    local run = addon.RunHistory:GetCurrentRun(g_currentInstanceId)
+    local run = g_runs[g_currentInstanceId]
     if not run then
         print("Challenge completed outside of dungeon - please report bug")
         DevTools_Dump(C_ChallengeMode.GetChallengeCompletionInfo())
@@ -289,7 +297,7 @@ local function OnPlayerEnteringWorld(isInitialLogin, isReloadUI)
     local dungeonName, instanceType, difficultyId, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceId =
         GetInstanceInfo()
     g_currentInstanceId = instanceId
-    local run = addon.RunHistory:GetCurrentRun(instanceId)
+    local run = g_runs[g_currentInstanceId]
     if not run then
         if g_currentRun and g_currentRun.state.running then
             addon.RunUI:Show()
@@ -308,9 +316,10 @@ local function OnPlayerEnteringWorld(isInitialLogin, isReloadUI)
 end
 
 local function OnPlayerLeavingWorld()
-    local run = addon.RunHistory:GetCurrentRun(g_currentInstanceId)
+    local run = g_runs[g_currentInstanceId]
     if run then
         run.state.isStartTimeAccurate = false
+        addon.RunHistory:UpdateCurrentRun(addon.Utility:DeepCopy(run))
     end
 end
 
@@ -335,13 +344,15 @@ local function OnWorldStateTimerStart()
         GetInstanceInfo()
     g_currentInstanceId = instanceId
     if difficultyId == addon.Constants.CHALLENGE_MODE_DIFFICULTY_ID then
-        StartTimerCalibration(addon.RunHistory:GetCurrentRun(instanceId))
+        StartTimerCalibration(g_runs[g_currentInstanceId])
     end
 end
 
 -- Public API
 
 function addon.Run:Init()
+    InitializeRuns()
+
     local EVENTS = {
         ["CHALLENGE_MODE_RESET"] = OnChallengeModeReset,
         ["CHALLENGE_MODE_COMPLETED"] = OnChallengeModeCompleted,
@@ -351,11 +362,11 @@ function addon.Run:Init()
         ["WORLD_STATE_TIMER_START"] = OnWorldStateTimerStart,
     }
 
-    g_eventFrame = CreateFrame("Frame")
+    local eventFrame = CreateFrame("Frame")
     for key, _ in pairs(EVENTS) do
-        g_eventFrame:RegisterEvent(key)
+        eventFrame:RegisterEvent(key)
     end
-    g_eventFrame:SetScript("OnEvent", function(_, event, ...)
+    eventFrame:SetScript("OnEvent", function(_, event, ...)
         addon.Utility:DebugPrint(event)
         EVENTS[event](...)
     end)
@@ -411,15 +422,15 @@ function addon.Run:SetSampleRun()
     runTime = runTime + math.random()
     local sampleRun = addon.Run:CreateSampleRun(instanceId, runTime, true, 86400 * 3)
     sampleRun.previousRun = g_currentRun
-    g_sampleRun = sampleRun
-    addon.RunUI:SetRun(g_sampleRun)
+    self.sampleRun = sampleRun
+    addon.RunUI:SetRun(self.sampleRun)
 end
 
 function addon.Run:UnsetSampleRun()
-    if g_sampleRun then
-        if g_sampleRun.previousRun then
-            addon.RunUI:SetRun(g_sampleRun.previousRun)
+    if self.sampleRun then
+        if self.sampleRun.previousRun then
+            addon.RunUI:SetRun(self.sampleRun.previousRun)
         end
-        g_sampleRun = nil
+        self.sampleRun = nil
     end
 end

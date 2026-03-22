@@ -17,12 +17,13 @@ function addon.Utility:FormatTime(seconds, precision)
     return string.format("%d:%02d." .. tenthsFormatString, minutes, secs, tenths)
 end
 
-function addon.Utility:ShallowClone(t)
-    local t2 = {}
-    for k, v in pairs(t) do
-        t2[k] = v
+function addon.Utility:DeepCopy(obj)
+    if type(obj) ~= 'table' then return obj end
+    local res = {}
+    for k, v in pairs(obj) do
+        res[self:DeepCopy(k)] = self:DeepCopy(v)
     end
-    return t2
+    return res
 end
 
 function addon.Utility:GetClassColorById(classId)

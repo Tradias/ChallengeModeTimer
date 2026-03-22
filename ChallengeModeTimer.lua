@@ -72,6 +72,7 @@ local function InitializeAddon()
         ChallengeModeTimerDB = {}
     end
 
+    ChallengeModeTimerDB.version = 1
     addon.Migrations:Run()
 
     HideBlizzardChallengeModeTimer()
