@@ -185,7 +185,7 @@ local function BuildColumns()
     return {
         {
             name = "Date",
-            width = 180,
+            width = 160,
             align = "LEFT",
             index = 1,
             sort = addon.LST.SORT_DSC,
@@ -199,7 +199,7 @@ local function BuildColumns()
         {
             name = "Duration",
             width = 120,
-            align = "RIGHT",
+            align = "LEFT",
             index = 2,
             defaultsort = addon.LST.SORT_ASC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
@@ -211,7 +211,7 @@ local function BuildColumns()
         {
             name = "Completed",
             width = 120,
-            align = "RIGHT",
+            align = "LEFT",
             index = COMPLETED_INDEX,
             defaultsort = addon.LST.SORT_DSC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
@@ -223,7 +223,7 @@ local function BuildColumns()
         {
             name = "Runner",
             width = 140,
-            align = "RIGHT",
+            align = "LEFT",
             index = RUNNER_INDEX,
             defaultsort = addon.LST.SORT_ASC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
@@ -312,7 +312,7 @@ function addon.RunHistoryUI:CreateTable()
 
     local rowHeight = 20
     local tableFrame = addon.LST:CreateST(columns, 10, rowHeight, nil, self.runsFrame, false)
-    tableFrame.frame:SetPoint("TOPLEFT", self.dropdown, "BOTTOMLEFT", -10, -25)
+    tableFrame.frame:SetPoint("TOPLEFT", self.dropdown, "BOTTOMLEFT", -10, -30)
     tableFrame.frame:SetPoint("BOTTOMRIGHT", self.runsFrame, "BOTTOMRIGHT", 0, 0)
 
     local function SetTableFonts()

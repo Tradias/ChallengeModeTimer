@@ -89,7 +89,7 @@ end
 
 function addon.RunHistory:InsertSampleRuns()
     for instanceId, dungeonData in pairs(addon.Constants.CHALLENGE_MODE_DUNGEONS) do
-        local baseTime = dungeonData.medals.gold
+        local baseTime = dungeonData.medals[3] -- gold
         local slowerTime = baseTime + 45
         local fasterTime = math.max(60, baseTime - 30)
         local partialTime = math.max(60, math.floor(baseTime * 0.4))
