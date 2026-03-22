@@ -417,8 +417,7 @@ end
 
 function addon.Run:SetSampleRun()
     local instanceId = 1004
-    local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
-    local runTime = (dungeonData.medals and dungeonData.medals.gold) or 900
+    local runTime = 450
     runTime = runTime + math.random()
     local sampleRun = addon.Run:CreateSampleRun(instanceId, runTime, true, 86400 * 3)
     sampleRun.previousRun = g_currentRun

@@ -107,14 +107,12 @@ local function AddSplitLinesToTooltip(run, instanceId)
     local splitProfile = addon.SplitProfile:Get(instanceId)
     for index, split in ipairs(run.splits or {}) do
         local splitDefinition = splitProfile.splits[index]
-        if splitDefinition then
-            local label = addon.SplitProfile:FormatSplitLabel(split, splitDefinition)
-            local durationText = BuildSplitDurationText(split)
-            if split.completed then
-                GameTooltip:AddDoubleLine(label, durationText, 0.2, 1, 0.2, 1, 1, 1)
-            else
-                GameTooltip:AddDoubleLine(label, durationText, 1, 1, 1, 1, 1, 1)
-            end
+        local label = addon.SplitProfile:FormatSplitLabel(split, splitDefinition)
+        local durationText = BuildSplitDurationText(split)
+        if split.completed then
+            GameTooltip:AddDoubleLine(label, durationText, 0.2, 1, 0.2, 1, 1, 1)
+        else
+            GameTooltip:AddDoubleLine(label, durationText, 1, 1, 1, 1, 1, 1)
         end
     end
 end

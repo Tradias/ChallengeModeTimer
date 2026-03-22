@@ -36,12 +36,6 @@ local function FormatTimeParts(seconds)
     return minutesText, secondsTensText, secondsOnesText, ".", string.format("%01d", tenths)
 end
 
-local function FormatMedalTime(seconds)
-    local minutes = math.floor(seconds / 60)
-    local secs = math.floor(seconds % 60)
-    return string.format("%d:%02d", minutes, secs)
-end
-
 local function CreateTimerTextPart(runFrame)
     local timerText = runFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     timerText:SetTextColor(1, 1, 1, 1)
@@ -194,9 +188,9 @@ local function BuildNextMedalText(runDuration, instanceId)
     local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
     for index, medalTime in ipairs(dungeonData.medals) do
         if runDuration < medalTime then
-            local label = MEDAL_LABELS[index] or ""
-            local timeText = FormatMedalTime(medalTime)
-            local color = MEDAL_COLORS[index] or { 1, 1, 1 }
+            local label = MEDAL_LABELS[index]
+            local timeText = dungeonData.formattedMedalTimes[index]
+            local color = MEDAL_COLORS[index]
             return string.format("%s\n%s", label, timeText), color[1], color[2], color[3], 1
         end
     end
