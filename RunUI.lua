@@ -4,14 +4,14 @@ addon.RunUI = addon.RunUI or {}
 
 local RUN_UI_WIDTH = 300
 local MEDAL_LABELS = {
-    "Title",
-    "Platinum",
+    "Title?",
+    "Plat",
     "Gold",
     "Silver",
     "Bronze"
 }
 local MEDAL_COLORS = {
-    { 0.2,  0.8,  1 },    -- title
+    { 0.3,  0.8,  1 },    -- title
     { 0.9,  0.9,  1 },    -- platinum
     { 1,    0.82, 0 },    -- gold
     { 0.85, 0.85, 0.85 }, -- silver
@@ -39,7 +39,7 @@ end
 local function CreateTimerTextPart(runFrame)
     local timerText = runFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     timerText:SetTextColor(1, 1, 1, 1)
-    timerText:SetFont(addon.Constants.FONT, 21, "OUTLINE")
+    timerText:SetFont(addon.Constants.FONT, 22, "OUTLINE")
     return timerText
 end
 
@@ -56,7 +56,7 @@ local function CreateTimerText(runFrame)
     timerText.secondsOnes:SetPoint("CENTER", runFrame, "CENTER", 0, 0)
     timerText.dot:SetPoint("CENTER", runFrame, "CENTER", 9, 0)
     timerText.milliseconds:SetPoint("CENTER", runFrame, "CENTER", 19, -2.5)
-    timerText.milliseconds:SetFont(addon.Constants.FONT, 13, "OUTLINE")
+    timerText.milliseconds:SetFont(addon.Constants.FONT, 14, "OUTLINE")
     return timerText
 end
 
@@ -64,7 +64,7 @@ local function CreateMedalText(runFrame)
     local medalText = runFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     medalText:SetTextColor(1, 1, 1, 1)
     medalText:SetFont(addon.Constants.FONT, 13, "OUTLINE")
-    medalText:SetJustifyH("RIGHT")
+    medalText:SetJustifyH("LEFT")
     return medalText
 end
 
@@ -191,7 +191,7 @@ local function BuildNextMedalText(runDuration, instanceId)
             local label = MEDAL_LABELS[index]
             local timeText = dungeonData.formattedMedalTimes[index]
             local color = MEDAL_COLORS[index]
-            return string.format("%s\n%s", label, timeText), color[1], color[2], color[3], 1
+            return string.format("%s %s", timeText, label), color[1], color[2], color[3], 1
         end
     end
     return "", 1, 1, 1, 1
@@ -267,8 +267,7 @@ function addon.RunUI:Init()
     self.timerText = CreateTimerText(timerFrame)
 
     self.medalText = CreateMedalText(runFrame)
-    self.medalText:SetPoint("RIGHT", runFrame, "RIGHT", 0, 0)
-    self.medalText:SetPoint("CENTER", timerFrame, "CENTER", 0, 0)
+    self.medalText:SetPoint("LEFT", timerFrame, "RIGHT", -90, 0)
     self:SetShowMedalTime(GetShowMedalTime())
     self:UpdateTimerText(0)
 
