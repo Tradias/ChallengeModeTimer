@@ -249,34 +249,75 @@ function addon.RunHistoryUI:Init()
     local runsFrame = addon.OptionsUI:GetRunsFrame()
     self.runsFrame = runsFrame
 
+    self.instanceIds = BuildSortedInstanceIds()
+    self.selectedInstanceId = self.instanceIds[1]
+
+    -- Instance dropdown
     local dropdown = CreateFrame("DropdownButton", "ChallengeModeTimerRunHistoryDropdown", runsFrame,
         "WowStyle1DropdownTemplate")
     dropdown:SetPoint("TOPLEFT", runsFrame, "TOPLEFT", 10, 0)
     dropdown:SetWidth(180)
+    dropdown:SetupMenu(function(_, rootDescription)
+        for _, instanceId in ipairs(self.instanceIds) do
+            local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
+            local button = rootDescription:CreateButton(dungeonData.englishName,
+                function(v) self:SetSelectedInstance(v) end, instanceId)
+            button:SetIsSelected(function(v) return v == self.selectedInstanceId end)
+        end
+    end)
     self.dropdown = dropdown
 
-    local filterLabel = runsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    filterLabel:SetPoint("LEFT", dropdown, "RIGHT", 15, 0)
-    filterLabel:SetText("Filter")
-    SetFont(filterLabel, 12)
-
+    -- Filter
     local filterBox = CreateFrame("EditBox", nil, runsFrame, "InputBoxTemplate")
     filterBox:SetSize(170, 20)
-    filterBox:SetPoint("LEFT", filterLabel, "RIGHT", 6, 0)
+    filterBox:SetPoint("LEFT", dropdown, "RIGHT", 25, 0)
     filterBox:SetAutoFocus(false)
     SetFont(filterBox, 12)
-    filterBox:SetScript("OnEnterPressed", function()
-        filterBox:ClearFocus()
-    end)
-    self.filterText = ""
+
+    local filterPlaceholder = "Filter"
+    local isPlaceholder = false
+    local normalTextColor = { 1, 1, 1 }
+    local placeholderTextColor = { 0.6, 0.6, 0.6 }
+
+    local function SetPlaceholder()
+        isPlaceholder = true
+        filterBox:SetText(filterPlaceholder)
+        filterBox:SetTextColor(unpack(placeholderTextColor))
+        self.filterText = ""
+    end
+
+    local function ClearPlaceholder()
+        isPlaceholder = false
+        filterBox:SetText("")
+        filterBox:SetTextColor(unpack(normalTextColor))
+    end
+
+    SetPlaceholder()
     filterBox:SetScript("OnTextChanged", function()
+        if isPlaceholder then
+            return
+        end
         self.filterText = filterBox:GetText()
         self.table:SortData()
     end)
+    filterBox:SetScript("OnEditFocusGained", function()
+        if isPlaceholder then
+            ClearPlaceholder()
+        end
+    end)
+    filterBox:SetScript("OnEditFocusLost", function()
+        if filterBox:GetText() == "" then
+            SetPlaceholder()
+        end
+    end)
+    filterBox:SetScript("OnEnterPressed", function()
+        filterBox:ClearFocus()
+    end)
 
+    -- Best run
     local bestRunButton = CreateFrame("Button", nil, runsFrame, "UIPanelButtonTemplate")
     bestRunButton:SetSize(80, filterBox:GetHeight())
-    bestRunButton:SetPoint("LEFT", filterBox, "RIGHT", 23, -1)
+    bestRunButton:SetPoint("LEFT", filterBox, "RIGHT", 20, -1)
     bestRunButton:SetText("Best run")
     bestRunButton:SetScript("OnClick", function()
         self:SelectBestFilteredRun()
@@ -288,19 +329,7 @@ function addon.RunHistoryUI:Init()
         GameTooltip:Hide()
     end)
 
-    self.instanceIds = BuildSortedInstanceIds()
-    self.selectedInstanceId = self.instanceIds[1]
-
     self.table = self:CreateTable()
-
-    dropdown:SetupMenu(function(_, rootDescription)
-        for _, instanceId in ipairs(self.instanceIds) do
-            local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
-            local button = rootDescription:CreateButton(dungeonData.englishName,
-                function(v) self:SetSelectedInstance(v) end, instanceId)
-            button:SetIsSelected(function(v) return v == self.selectedInstanceId end)
-        end
-    end)
 
     runsFrame:HookScript("OnShow", function()
         self:SetSelectedInstance(self.selectedInstanceId)
