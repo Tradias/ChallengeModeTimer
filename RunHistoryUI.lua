@@ -198,7 +198,7 @@ local function BuildColumns()
         },
         {
             name = "Duration",
-            width = 120,
+            width = 130,
             align = "LEFT",
             index = 2,
             defaultsort = addon.LST.SORT_ASC,

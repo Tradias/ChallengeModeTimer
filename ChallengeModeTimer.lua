@@ -50,6 +50,23 @@ local function OnSlashCommand(msg)
     end
 end
 
+local function RegisterInterfaceOptions()
+    local panel = CreateFrame("Frame", "ChallengeModeTimerOptionsPanel", UIParent)
+
+    local button = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    button:SetPoint("CENTER")
+    button:SetSize(180, 50)
+    button:SetText("/cmt")
+    local fontObject = CreateFont("ChallengeModeTimerOptionsPanelButtonFont")
+    fontObject:SetFont(addon.Constants.FONT, 32, "")
+    button:SetNormalFontObject(fontObject)
+    button:SetHighlightFontObject(fontObject)
+    button:SetScript("OnClick", function() OnSlashCommand("") end)
+
+    local category = Settings.RegisterCanvasLayoutCategory(panel, addonName)
+    Settings.RegisterAddOnCategory(category)
+end
+
 local function InitializeAddon()
     if not ChallengeModeTimerDB then
         ChallengeModeTimerDB = {}
@@ -62,6 +79,7 @@ local function InitializeAddon()
     addon.RunHistory:Init()
     addon.RunUI:Init()
     addon.Run:Init()
+    RegisterInterfaceOptions()
 
     SLASH_CHALLENGEMODETIMER1 = "/cmt"
     SlashCmdList["CHALLENGEMODETIMER"] = OnSlashCommand
