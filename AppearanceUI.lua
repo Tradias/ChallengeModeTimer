@@ -36,11 +36,9 @@ local function CreateDropdown(parentFrame, labelText)
     local label = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     label:SetText(labelText)
 
-    local dropdown = CreateFrame("Frame", nil, parentFrame, "UIDropDownMenuTemplate")
-    dropdown:SetPoint("LEFT", label, "RIGHT", -8, -3)
-
-    UIDropDownMenu_SetWidth(dropdown, 80)
-    UIDropDownMenu_JustifyText(dropdown, "LEFT")
+    local dropdown = CreateFrame("DropdownButton", nil, parentFrame, "WowStyle1DropdownTemplate")
+    dropdown:SetPoint("LEFT", label, "RIGHT", 8, 0)
+    dropdown:SetWidth(80)
 
     return dropdown, label
 end
@@ -52,34 +50,14 @@ local function CreateCheckbox(parentFrame, labelText)
     return checkButton
 end
 
-local function InitializeJustifyDropdown(dropdown, currentValue, onSelect)
-    local options = {
-        { text = "Left",   value = "LEFT" },
-        { text = "Center", value = "CENTER" },
-        { text = "Right",  value = "RIGHT" },
-    }
-
-    UIDropDownMenu_Initialize(dropdown, function(_, level)
-        for _, option in ipairs(options) do
-            local info = UIDropDownMenu_CreateInfo()
-            info.text = option.text
-            info.value = option.value
-            info.func = function()
-                UIDropDownMenu_SetSelectedValue(dropdown, option.value)
-                UIDropDownMenu_SetText(dropdown, option.text)
-                onSelect(option.value)
-            end
-            UIDropDownMenu_AddButton(info, level)
-        end
-    end)
-
-    UIDropDownMenu_SetSelectedValue(dropdown, currentValue)
-    for _, option in ipairs(options) do
-        if option.value == currentValue then
-            UIDropDownMenu_SetText(dropdown, option.text)
-            break
-        end
-    end
+local function InitializeJustifyDropdown(dropdown, isSelected, onSelect)
+    MenuUtil.CreateRadioMenu(dropdown,
+        isSelected,
+        onSelect,
+        { "Left",   "LEFT" },
+        { "Center", "CENTER" },
+        { "Right",  "RIGHT" }
+    )
 end
 
 function addon.AppearanceUI:Init()
@@ -168,9 +146,13 @@ function addon.AppearanceUI:Init()
 
     local splitLabelJustifyDropdown, splitLabelJustifyLabel = CreateDropdown(appearanceFrame, "Align")
     splitLabelJustifyLabel:SetPoint("LEFT", splitLabelOffsetInput, "RIGHT", 25, 0)
-    InitializeJustifyDropdown(splitLabelJustifyDropdown, addon.RunUI:GetSplitLabelJustifyH(), function(value)
-        addon.RunUI:SetSplitLabelJustifyH(value)
-    end)
+    InitializeJustifyDropdown(splitLabelJustifyDropdown,
+        function(value)
+            return value == addon.RunUI:GetSplitLabelJustifyH()
+        end,
+        function(value)
+            addon.RunUI:SetSplitLabelJustifyH(value)
+        end)
 
     -- Split duration
     local splitDurationLabel = appearanceFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -189,9 +171,13 @@ function addon.AppearanceUI:Init()
 
     local splitDurationJustifyDropdown, splitDurationJustifyLabel = CreateDropdown(appearanceFrame, "Align")
     splitDurationJustifyLabel:SetPoint("LEFT", splitDurationOffsetInput, "RIGHT", 25, 0)
-    InitializeJustifyDropdown(splitDurationJustifyDropdown, addon.RunUI:GetSplitDurationJustifyH(), function(value)
-        addon.RunUI:SetSplitDurationJustifyH(value)
-    end)
+    InitializeJustifyDropdown(splitDurationJustifyDropdown,
+        function(value)
+            return value == addon.RunUI:GetSplitDurationJustifyH()
+        end,
+        function(value)
+            addon.RunUI:SetSplitDurationJustifyH(value)
+        end)
 
     -- Split comparison
     local splitComparisonLabel = appearanceFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -210,7 +196,11 @@ function addon.AppearanceUI:Init()
 
     local splitComparisonJustifyDropdown, splitComparisonJustifyLabel = CreateDropdown(appearanceFrame, "Align")
     splitComparisonJustifyLabel:SetPoint("LEFT", splitComparisonOffsetInput, "RIGHT", 25, 0)
-    InitializeJustifyDropdown(splitComparisonJustifyDropdown, addon.RunUI:GetSplitComparisonJustifyH(), function(value)
-        addon.RunUI:SetSplitComparisonJustifyH(value)
-    end)
+    InitializeJustifyDropdown(splitComparisonJustifyDropdown,
+        function(value)
+            return value == addon.RunUI:GetSplitComparisonJustifyH()
+        end,
+        function(value)
+            addon.RunUI:SetSplitComparisonJustifyH(value)
+        end)
 end

@@ -249,15 +249,14 @@ function addon.RunHistoryUI:Init()
     local runsFrame = addon.OptionsUI:GetRunsFrame()
     self.runsFrame = runsFrame
 
-    local dropdown = CreateFrame("Frame", "ChallengeModeTimerRunHistoryDropdown", runsFrame, "UIDropDownMenuTemplate")
-    dropdown:SetPoint("TOPLEFT", runsFrame, "TOPLEFT", 0, 0)
-    UIDropDownMenu_SetWidth(dropdown, 165)
-    UIDropDownMenu_JustifyText(dropdown, "LEFT")
-    SetFont(_G[dropdown:GetName() .. "Text"], 12)
+    local dropdown = CreateFrame("DropdownButton", "ChallengeModeTimerRunHistoryDropdown", runsFrame,
+        "WowStyle1DropdownTemplate")
+    dropdown:SetPoint("TOPLEFT", runsFrame, "TOPLEFT", 10, 0)
+    dropdown:SetWidth(180)
     self.dropdown = dropdown
 
     local filterLabel = runsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    filterLabel:SetPoint("LEFT", dropdown, "RIGHT", 8, 3)
+    filterLabel:SetPoint("LEFT", dropdown, "RIGHT", 15, 0)
     filterLabel:SetText("Filter")
     SetFont(filterLabel, 12)
 
@@ -279,7 +278,6 @@ function addon.RunHistoryUI:Init()
     bestRunButton:SetSize(80, filterBox:GetHeight())
     bestRunButton:SetPoint("LEFT", filterBox, "RIGHT", 23, -1)
     bestRunButton:SetText("Best run")
-    SetFont(bestRunButton:GetFontString(), 12)
     bestRunButton:SetScript("OnClick", function()
         self:SelectBestFilteredRun()
     end)
@@ -295,15 +293,12 @@ function addon.RunHistoryUI:Init()
 
     self.table = self:CreateTable()
 
-    UIDropDownMenu_Initialize(dropdown, function(_, level)
+    dropdown:SetupMenu(function(_, rootDescription)
         for _, instanceId in ipairs(self.instanceIds) do
             local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
-            local info        = UIDropDownMenu_CreateInfo()
-            info.text         = dungeonData.englishName
-            info.fontObject   = addon.Constants.FONT_OBJECT
-            info.noClickSound = true
-            info.func         = function() self:SetSelectedInstance(instanceId) end
-            UIDropDownMenu_AddButton(info, level)
+            local button = rootDescription:CreateButton(dungeonData.englishName,
+                function(v) self:SetSelectedInstance(v) end, instanceId)
+            button:SetIsSelected(function(v) return v == self.selectedInstanceId end)
         end
     end)
 
@@ -317,7 +312,7 @@ function addon.RunHistoryUI:CreateTable()
 
     local rowHeight = 20
     local tableFrame = addon.LST:CreateST(columns, 10, rowHeight, nil, self.runsFrame, false)
-    tableFrame.frame:SetPoint("TOPLEFT", self.dropdown, "BOTTOMLEFT", 0, -20)
+    tableFrame.frame:SetPoint("TOPLEFT", self.dropdown, "BOTTOMLEFT", -10, -25)
     tableFrame.frame:SetPoint("BOTTOMRIGHT", self.runsFrame, "BOTTOMRIGHT", 0, 0)
 
     local function SetTableFonts()
@@ -432,7 +427,5 @@ function addon.RunHistoryUI:SetSelectedInstance(instanceId)
         return
     end
     self.selectedInstanceId = instanceId
-    local name = dungeonData.englishName
-    UIDropDownMenu_SetText(self.dropdown, name)
     self:Refresh()
 end
