@@ -4,7 +4,7 @@ addon.OptionsUI = addon.OptionsUI or {}
 
 function addon.OptionsUI:Init()
     local optionsFrame = CreateFrame("Frame", "ChallengeModeTimerOptions", UIParent, "BackdropTemplate")
-    optionsFrame:SetSize(615, 570)
+    optionsFrame:SetSize(515, 570)
     optionsFrame:SetPoint("CENTER")
     optionsFrame:SetFrameStrata("DIALOG")
     optionsFrame:SetBackdrop({

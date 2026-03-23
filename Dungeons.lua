@@ -172,3 +172,15 @@ function addon.Dungeons:GetMedalInfoByDuration(instanceId, runDuration)
     local timeText = dungeon.formattedMedalTimes[medalIndex]
     return label, color, timeText
 end
+
+function addon.Dungeons:IsMedalLabel(text)
+    if text == "title" then
+        return true
+    end
+    for _, label in ipairs(MEDAL_LABELS) do
+        if string.lower(label) == text then
+            return true
+        end
+    end
+    return false
+end

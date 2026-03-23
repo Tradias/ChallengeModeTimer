@@ -2,8 +2,8 @@ local addonName, addon = ...
 
 addon.RunHistoryUI = addon.RunHistoryUI or {}
 
-local COMPLETED_INDEX = 4
-local RUNNER_INDEX = 5
+local MEDAL_COLUMN_INDEX = 3
+local RUNNER_COLUMN_INDEX = 4
 
 local function SetFont(fontString, desiredSize)
     local _, size, flags = fontString:GetFont()
@@ -62,20 +62,20 @@ local function GetSortDirection(table, sortby)
 end
 
 local function CompareRowValues(tableFrame, rowa, rowb, sortby, valueGetter)
-    local direction = GetSortDirection(tableFrame, sortby)
-    local aValue = valueGetter(tableFrame.data[rowa], direction)
-    local bValue = valueGetter(tableFrame.data[rowb], direction)
+    local aValue = valueGetter(tableFrame.data[rowa])
+    local bValue = valueGetter(tableFrame.data[rowb])
     if aValue == bValue then
         return false
     end
+    local direction = GetSortDirection(tableFrame, sortby)
     if direction == addon.LST.SORT_ASC then
         return aValue < bValue
     end
     return aValue > bValue
 end
 
-local function RemoveClassColor(name)
-    return string.sub(name, 11, -3)
+local function RemoveColorCode(text)
+    return string.sub(text, 11, -3)
 end
 
 local function FilterRow(filterText, rowData)
@@ -83,16 +83,18 @@ local function FilterRow(filterText, rowData)
         return true
     end
     local text = string.lower(filterText)
-    if text == "yes" or text == "no" then
-        return string.find(rowData.cols[COMPLETED_INDEX].value, text, 1, true)
+    if addon.Dungeons:IsMedalLabel(text) then
+        local cellValue = rowData.cols[MEDAL_COLUMN_INDEX].value
+        cellValue = string.lower(RemoveColorCode(cellValue))
+        return string.find(cellValue, text, 1, true)
     end
-    for index, column in ipairs(rowData.cols) do
-        if index ~= COMPLETED_INDEX then
-            local columnValue = column.value
-            if index == RUNNER_INDEX then
-                columnValue = string.lower(RemoveClassColor(columnValue))
+    for index, cell in ipairs(rowData.cols) do
+        if index ~= MEDAL_COLUMN_INDEX then
+            local cellValue = cell.value
+            if index == RUNNER_COLUMN_INDEX then
+                cellValue = string.lower(RemoveColorCode(cellValue))
             end
-            if string.find(columnValue, text, 1, true) then
+            if string.find(cellValue, text, 1, true) then
                 return true
             end
         end
@@ -272,27 +274,11 @@ local function BuildColumns()
             name = "Medal",
             width = 70,
             align = "LEFT",
-            index = 3,
+            index = MEDAL_COLUMN_INDEX,
             defaultsort = addon.LST.SORT_ASC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
-                return CompareRowValues(tableFrame, rowa, rowb, sortby, function(row, direction)
-                    -- Incomplete runs are always last
-                    if direction == addon.LST.SORT_ASC then
-                        return row.run.medalIndex or addon.Dungeons.INCOMPLETE_MEDAL_INDEX
-                    end
-                    return row.run.medalIndex or 0
-                end)
-            end
-        },
-        {
-            name = "Completed",
-            width = 100,
-            align = "LEFT",
-            index = COMPLETED_INDEX,
-            defaultsort = addon.LST.SORT_DSC,
-            comparesort = function(tableFrame, rowa, rowb, sortby)
                 return CompareRowValues(tableFrame, rowa, rowb, sortby, function(row)
-                    return row.run.completed and 1 or 0
+                    return row.run.medalIndex or addon.Dungeons.INCOMPLETE_MEDAL_INDEX
                 end)
             end
         },
@@ -300,12 +286,12 @@ local function BuildColumns()
             name = "Runner",
             width = 130,
             align = "LEFT",
-            index = RUNNER_INDEX,
+            index = RUNNER_COLUMN_INDEX,
             defaultsort = addon.LST.SORT_ASC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
                 return CompareRowValues(tableFrame, rowa, rowb, sortby, function(row)
                     local runnerName = row.run.runner and row.run.runner.name or ""
-                    return string.lower(RemoveClassColor(runnerName))
+                    return string.lower(RemoveColorCode(runnerName))
                 end)
             end
         }
@@ -317,7 +303,6 @@ local function BuildRowValues(run)
         { value = FormatRunDate(run.startTimestamp) },
         { value = addon.Utility:FormatTime(run.duration, 3) },
         { value = BuildMedalText(run) },
-        { value = run.completed and "yes" or "no" },
         { value = BuildRunnerNameText(run) },
     }
 end
@@ -468,7 +453,7 @@ function addon.RunHistoryUI:CreateTable()
                 return false
             end
             local rowData = table:GetRow(realrow)
-            if column == RUNNER_INDEX then
+            if column == RUNNER_COLUMN_INDEX then
                 ShowRunnersTooltip(cellFrame, rowData.run)
             else
                 ShowRunSplitsTooltip(cellFrame, rowData.run, self.selectedInstanceId)
