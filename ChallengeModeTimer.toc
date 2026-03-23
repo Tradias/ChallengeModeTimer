@@ -1,9 +1,12 @@
 ## Interface: 50502
 ## Title: Challenge Mode Timer
-## Notes: A challenge mode timer with splits and run history
+## Notes: Challenge Mode timer with splits and run history
 ## Author: Tradias
 ## Version: 1.0.0
 ## SavedVariables: ChallengeModeTimerDB
+
+## X-Website: https://github.com/Tradias/ChallengeModeTimer
+## X-Curse-Project-ID: 1493560
 
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
