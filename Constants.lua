@@ -119,9 +119,38 @@ for _, dungeonData in pairs(addon.Constants.CHALLENGE_MODE_DUNGEONS) do
     }
 end
 
+addon.Constants.MEDAL_LABELS = {
+    "Title?",
+    "Plat",
+    "Gold",
+    "Silver",
+    "Bronze"
+}
+
+addon.Constants.MEDAL_COLORS = {
+    { 0.3,  0.8,  1 },    -- title
+    { 0.9,  0.9,  1 },    -- platinum
+    { 1,    0.82, 0 },    -- gold
+    { 0.85, 0.85, 0.85 }, -- silver
+    { 0.8,  0.55, 0.25 }  -- bronze
+}
+
 function addon.Constants:Init()
     addon.Constants.FONT = addon.LSM:Fetch("font", "2002") or "Fonts\\2002.TTF"
     local fontObject = CreateFont("ChallengeModeTimerDropdownFontObject")
     fontObject:SetFont(addon.Constants.FONT, 12, "")
     addon.Constants.FONT_OBJECT = fontObject
+end
+
+function addon.Constants:GetMedalInfo(instanceId, runDuration)
+    local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
+    for index, medalTime in ipairs(dungeonData.medals) do
+        if runDuration < medalTime then
+            local label = addon.Constants.MEDAL_LABELS[index]
+            local color = addon.Constants.MEDAL_COLORS[index]
+            local timeText = dungeonData.formattedMedalTimes[index]
+            return label, color, timeText
+        end
+    end
+    return nil, nil, nil
 end

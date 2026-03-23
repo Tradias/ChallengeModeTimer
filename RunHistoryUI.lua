@@ -179,6 +179,48 @@ local function ShowBestRunTooltip(frame, table, instanceId)
     GameTooltip:Show()
 end
 
+local function SendMessageInCurrentChannel(editBox, text)
+    local chatType = editBox:GetAttribute("chatType") or "PARTY"
+    local target
+    if chatType == "WHISPER" then
+        target = editBox:GetAttribute("tellTarget")
+    elseif chatType == "CHANNEL" then
+        return
+    end
+    C_ChatInfo.SendChatMessage(text, chatType, nil, target)
+end
+
+local function SendRunToChat(run, instanceId)
+    local editBox = ChatEdit_GetActiveWindow()
+    if not editBox then
+        print("Press enter and try again")
+        return
+    end
+
+    local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
+    local dungeonName = dungeonData.englishName
+    local durationText = addon.Utility:FormatTime(run.duration, 3)
+    local medalLabel = addon.Constants:GetMedalInfo(instanceId, run.duration)
+    SendMessageInCurrentChannel(editBox, string.format("%s - %s %s", dungeonName, durationText, medalLabel))
+
+    local splitProfile = addon.SplitProfile:Get(instanceId)
+    for index, split in ipairs(run.splits or {}) do
+        local splitDefinition = splitProfile.splits[index]
+        local label = addon.SplitProfile:FormatSplitLabel(split, splitDefinition)
+        local splitDurationText = BuildSplitDurationText(split)
+        SendMessageInCurrentChannel(editBox, string.format("%s - %s", label, splitDurationText))
+    end
+end
+
+local function SetComparisonRunIndex(table, instanceId, index)
+    local isAlreadySelected = (table:GetSelection() == index)
+    if isAlreadySelected then
+        addon.RunHistory:SetComparisonRunIndex(instanceId, nil)
+    else
+        addon.RunHistory:SetComparisonRunIndex(instanceId, index)
+    end
+end
+
 local function BuildColumns()
     return {
         {
@@ -373,22 +415,22 @@ function addon.RunHistoryUI:CreateTable()
     tableFrame:SetDefaultHighlight(0.2, 0.6, 1, 0.25)
 
     tableFrame:RegisterEvents({
-        OnClick = function(rowFrame, cellFrame, data, cols, row, realrow, column, tableFrame, button)
+        OnClick = function(rowFrame, cellFrame, data, cols, row, realrow, column, table, button)
             if button == "LeftButton" and realrow then
-                local isAlreadySelected = (tableFrame:GetSelection() == realrow)
-                if isAlreadySelected then
-                    addon.RunHistory:SetComparisonRunIndex(self.selectedInstanceId, nil)
-                else
-                    addon.RunHistory:SetComparisonRunIndex(self.selectedInstanceId, realrow)
+                if IsShiftKeyDown() then
+                    local rowData = table:GetRow(realrow)
+                    SendRunToChat(rowData.run, self.selectedInstanceId)
+                    return true
                 end
+                SetComparisonRunIndex(table, self.selectedInstanceId, realrow)
             end
             return false
         end,
-        OnEnter = function(rowFrame, cellFrame, data, cols, row, realrow, column, tableFrame)
+        OnEnter = function(rowFrame, cellFrame, data, cols, row, realrow, column, table)
             if not realrow then
                 return false
             end
-            local rowData = tableFrame:GetRow(realrow)
+            local rowData = table:GetRow(realrow)
             if column == RUNNER_INDEX then
                 ShowRunnersTooltip(cellFrame, rowData.run)
             else

@@ -3,20 +3,6 @@ local addonName, addon = ...
 addon.RunUI = addon.RunUI or {}
 
 local RUN_UI_WIDTH = 300
-local MEDAL_LABELS = {
-    "Title?",
-    "Plat",
-    "Gold",
-    "Silver",
-    "Bronze"
-}
-local MEDAL_COLORS = {
-    { 0.3,  0.8,  1 },    -- title
-    { 0.9,  0.9,  1 },    -- platinum
-    { 1,    0.82, 0 },    -- gold
-    { 0.85, 0.85, 0.85 }, -- silver
-    { 0.8,  0.55, 0.25 }  -- bronze
-}
 
 local function FormatTimeParts(seconds)
     local minutes = math.floor(seconds / 60)
@@ -188,15 +174,10 @@ local function BuildSplitDurationText(split, comparisonSplit)
     return "-"
 end
 
-local function BuildNextMedalText(runDuration, instanceId)
-    local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
-    for index, medalTime in ipairs(dungeonData.medals) do
-        if runDuration < medalTime then
-            local label = MEDAL_LABELS[index]
-            local timeText = dungeonData.formattedMedalTimes[index]
-            local color = MEDAL_COLORS[index]
-            return string.format("%s %s", timeText, label), color[1], color[2], color[3], 1
-        end
+local function BuildNextMedalText(instanceId, runDuration)
+    local label, color, timeText = addon.Constants:GetMedalInfo(instanceId, runDuration)
+    if label then
+        return string.format("%s %s", timeText, label), color[1], color[2], color[3], 1
     end
     return "", 1, 1, 1, 1
 end
@@ -226,8 +207,8 @@ function addon.RunUI:UpdateTimerText(runDuration)
 
     if self.showMedalTime then
         local medalText, medalR, medalG, medalB, medalA = BuildNextMedalText(
-            runDuration,
-            self.run.state.instanceId
+            self.run.state.instanceId,
+            runDuration
         )
         self.medalText:SetText(medalText)
         self.medalText:SetTextColor(medalR, medalG, medalB, medalA)
