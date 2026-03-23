@@ -2,8 +2,8 @@ local addonName, addon = ...
 
 addon.RunHistoryUI = addon.RunHistoryUI or {}
 
-local COMPLETED_INDEX = 3
-local RUNNER_INDEX = 4
+local COMPLETED_INDEX = 4
+local RUNNER_INDEX = 5
 
 local function SetFont(fontString, desiredSize)
     local _, size, flags = fontString:GetFont()
@@ -35,6 +35,17 @@ local function BuildSplitDurationText(split)
     return "-"
 end
 
+local function BuildMedalText(run)
+    local medalIndex = run.medalIndex
+    if not medalIndex then
+        return ""
+    end
+    local label = addon.Dungeons:GetMedalLabelByIndex(medalIndex)
+    local color = addon.Dungeons:GetMedalColorByIndex(medalIndex)
+    local colorStr = string.format("ff%02x%02x%02x", color[1] * 255, color[2] * 255, color[3] * 255)
+    return string.format("|c%s%s|r", colorStr, label)
+end
+
 local function BuildRunnerNameText(run)
     if not run.runners or #run.runners < 1 then
         return "-"
@@ -45,14 +56,18 @@ local function BuildRunnerNameText(run)
     return string.format("|c%s%s|r", colorStr, player.name)
 end
 
+local function GetSortDirection(table, sortby)
+    local column = table.cols[sortby]
+    return column.sort or column.defaultsort
+end
+
 local function CompareRowValues(tableFrame, rowa, rowb, sortby, valueGetter)
-    local aValue = valueGetter(tableFrame.data[rowa])
-    local bValue = valueGetter(tableFrame.data[rowb])
+    local direction = GetSortDirection(tableFrame, sortby)
+    local aValue = valueGetter(tableFrame.data[rowa], direction)
+    local bValue = valueGetter(tableFrame.data[rowb], direction)
     if aValue == bValue then
         return false
     end
-    local column = tableFrame.cols[sortby]
-    local direction = column.sort or column.defaultsort
     if direction == addon.LST.SORT_ASC then
         return aValue < bValue
     end
@@ -199,8 +214,14 @@ local function SendRunToChat(run, instanceId)
     local dungeon = addon.Dungeons:Get(instanceId)
     local dungeonName = dungeon.name
     local durationText = addon.Utility:FormatTime(run.duration, 3)
-    local medalLabel = addon.Dungeons:GetMedalInfo(instanceId, run.duration)
-    SendMessageInCurrentChannel(editBox, string.format("%s - %s %s", dungeonName, durationText, medalLabel))
+    local header
+    if run.medalIndex then
+        local medalLabel = addon.Dungeons:GetMedalLabelByIndex(run.medalIndex)
+        header = string.format("%s - %s %s", dungeonName, durationText, medalLabel)
+    else
+        header = string.format("%s - %s", dungeonName, durationText)
+    end
+    SendMessageInCurrentChannel(editBox, header)
 
     local splitProfile = addon.SplitProfile:Get(instanceId)
     for index, split in ipairs(run.splits or {}) do
@@ -224,7 +245,7 @@ local function BuildColumns()
     return {
         {
             name = "Date",
-            width = 160,
+            width = 150,
             align = "LEFT",
             index = 1,
             sort = addon.LST.SORT_DSC,
@@ -237,7 +258,7 @@ local function BuildColumns()
         },
         {
             name = "Duration",
-            width = 130,
+            width = 110,
             align = "LEFT",
             index = 2,
             defaultsort = addon.LST.SORT_ASC,
@@ -248,8 +269,24 @@ local function BuildColumns()
             end
         },
         {
+            name = "Medal",
+            width = 70,
+            align = "LEFT",
+            index = 3,
+            defaultsort = addon.LST.SORT_ASC,
+            comparesort = function(tableFrame, rowa, rowb, sortby)
+                return CompareRowValues(tableFrame, rowa, rowb, sortby, function(row, direction)
+                    -- Incomplete runs are always last
+                    if direction == addon.LST.SORT_ASC then
+                        return row.run.medalIndex or addon.Dungeons.INCOMPLETE_MEDAL_INDEX
+                    end
+                    return row.run.medalIndex or 0
+                end)
+            end
+        },
+        {
             name = "Completed",
-            width = 120,
+            width = 100,
             align = "LEFT",
             index = COMPLETED_INDEX,
             defaultsort = addon.LST.SORT_DSC,
@@ -261,7 +298,7 @@ local function BuildColumns()
         },
         {
             name = "Runner",
-            width = 140,
+            width = 130,
             align = "LEFT",
             index = RUNNER_INDEX,
             defaultsort = addon.LST.SORT_ASC,
@@ -279,6 +316,7 @@ local function BuildRowValues(run)
     return {
         { value = FormatRunDate(run.startTimestamp) },
         { value = addon.Utility:FormatTime(run.duration, 3) },
+        { value = BuildMedalText(run) },
         { value = run.completed and "yes" or "no" },
         { value = BuildRunnerNameText(run) },
     }

@@ -20,6 +20,9 @@ function addon.Migrations:Run()
                     run.runners = { run.runner }
                     run.runner = nil
                 end
+                if not run.medalIndex and run.completed then
+                    run.medalIndex = addon.Dungeons:GetMedalIndexByDuration(instanceId, run.duration)
+                end
             end
 
             if #runs > 0 and runs[#runs].state then

@@ -175,11 +175,8 @@ local function BuildSplitDurationText(split, comparisonSplit)
 end
 
 local function BuildNextMedalText(instanceId, runDuration)
-    local label, color, timeText = addon.Dungeons:GetMedalInfo(instanceId, runDuration)
-    if label then
-        return string.format("%s %s", timeText, label), color[1], color[2], color[3], 1
-    end
-    return "", 1, 1, 1, 1
+    local label, color, timeText = addon.Dungeons:GetMedalInfoByDuration(instanceId, runDuration)
+    return string.format("%s %s", timeText, label), color[1], color[2], color[3], 1
 end
 
 local function SetSplitTextXOffset(splitLines, textKey, offset)

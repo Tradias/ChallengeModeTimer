@@ -252,6 +252,7 @@ local function OnRunEnd(run, challengeCompletionInfo)
     if challengeCompletionInfo then
         run.completed = true
         run.duration = challengeCompletionInfo.time / 1000
+        run.medalIndex = addon.Dungeons:GetMedalIndexByDuration(instanceId, run.duration)
     end
     local nextRun = addon.RunHistory:PersistCurrentRun(run)
     nextRun = addon.Utility:DeepCopy(nextRun)

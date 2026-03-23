@@ -118,7 +118,9 @@ local MEDAL_LABELS = {
     "Plat",
     "Gold",
     "Silver",
-    "Bronze"
+    "Bronze",
+    "No Medal",
+    ""
 }
 
 local MEDAL_COLORS = {
@@ -126,8 +128,14 @@ local MEDAL_COLORS = {
     { 0.9,  0.9,  1 },    -- platinum
     { 1,    0.82, 0 },    -- gold
     { 0.85, 0.85, 0.85 }, -- silver
-    { 0.8,  0.55, 0.25 }  -- bronze
+    { 0.8,  0.55, 0.25 }, -- bronze
+    { 1,    1,    1 },    -- no medal
+    { 1,    1,    1 }     -- incomplete run
 }
+
+local NO_MEDAL_INDEX = 6
+
+addon.Dungeons.INCOMPLETE_MEDAL_INDEX = 7
 
 addon.Dungeons.CHALLENGE_MODE_DIFFICULTY_ID = 8
 
@@ -138,15 +146,29 @@ function addon.Dungeons:Get(instanceId)
     return CHALLENGE_MODE_DUNGEONS
 end
 
-function addon.Dungeons:GetMedalInfo(instanceId, runDuration)
+function addon.Dungeons:GetMedalIndexByDuration(instanceId, runDuration)
     local dungeon = CHALLENGE_MODE_DUNGEONS[instanceId]
     for index, medalTime in ipairs(dungeon.medals) do
         if runDuration < medalTime then
-            local label = MEDAL_LABELS[index]
-            local color = MEDAL_COLORS[index]
-            local timeText = dungeon.formattedMedalTimes[index]
-            return label, color, timeText
+            return index
         end
     end
-    return nil, nil, nil
+    return NO_MEDAL_INDEX
+end
+
+function addon.Dungeons:GetMedalLabelByIndex(medalIndex)
+    return MEDAL_LABELS[medalIndex]
+end
+
+function addon.Dungeons:GetMedalColorByIndex(medalIndex)
+    return MEDAL_COLORS[medalIndex]
+end
+
+function addon.Dungeons:GetMedalInfoByDuration(instanceId, runDuration)
+    local medalIndex = addon.Dungeons:GetMedalIndexByDuration(instanceId, runDuration)
+    local label = MEDAL_LABELS[medalIndex]
+    local color = MEDAL_COLORS[medalIndex]
+    local dungeon = CHALLENGE_MODE_DUNGEONS[instanceId]
+    local timeText = dungeon.formattedMedalTimes[medalIndex]
+    return label, color, timeText
 end
