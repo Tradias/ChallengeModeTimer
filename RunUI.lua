@@ -157,6 +157,10 @@ local function SaveRunUIPosition(frame)
     }
 end
 
+local function ResetRunUIPosition()
+    ChallengeModeTimerDB.runUI.position = nil
+end
+
 local function BuildSplitDifferenceTextAndColor(split, comparisonSplit)
     if split.completed and split.duration ~= 0 and comparisonSplit then
         if comparisonSplit.completed and comparisonSplit.duration ~= 0 then
@@ -238,12 +242,11 @@ function addon.RunUI:Init()
     self.run = addon.Run:CreateRun(1004)
 
     local runFrame = CreateFrame("Frame", "ChallengeModeTimerRunFrame", UIParent)
+    self.runFrame = runFrame
     runFrame:Hide()
     runFrame:SetSize(RUN_UI_WIDTH, 25)
-    runFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 10, -10)
     local savedPosition = GetRunUIPosition()
     if savedPosition then
-        runFrame:ClearAllPoints()
         runFrame:SetPoint(
             savedPosition.point,
             UIParent,
@@ -251,6 +254,8 @@ function addon.RunUI:Init()
             savedPosition.x,
             savedPosition.y
         )
+    else
+        self:ResetPosition()
     end
     runFrame:SetFrameLevel(5000)
     runFrame:SetClampedToScreen(true)
@@ -293,8 +298,6 @@ function addon.RunUI:Init()
         end)
     end
 
-    self.runFrame = runFrame
-
     self.splitsFrame = splitsFrame
     self.splitLines = {}
 
@@ -309,10 +312,6 @@ function addon.RunUI:SetMoveMode(enabled)
     self.moveModeEnabled = enabled
     self.runFrame:EnableMouse(enabled)
     self.splitsFrame:EnableMouse(enabled)
-
-    if not enabled then
-        SaveRunUIPosition(self.runFrame)
-    end
 end
 
 function addon.RunUI:IsMoveModeEnabled()
@@ -321,6 +320,12 @@ end
 
 function addon.RunUI:ToggleMoveMode()
     self:SetMoveMode(not self.moveModeEnabled)
+end
+
+function addon.RunUI:ResetPosition()
+    ResetRunUIPosition()
+    self.runFrame:ClearAllPoints()
+    self.runFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 30, -10)
 end
 
 function addon.RunUI:SetTimerScale(scale)

@@ -83,6 +83,15 @@ function addon.AppearanceUI:Init()
 
     UpdateMoveButtonText()
 
+    -- Reset position
+    local resetPositionButton = CreateFrame("Button", nil, appearanceFrame, "UIPanelButtonTemplate")
+    resetPositionButton:SetSize(110, 24)
+    resetPositionButton:SetPoint("LEFT", moveButton, "RIGHT", 8, 0)
+    resetPositionButton:SetText("Reset Position")
+    resetPositionButton:SetScript("OnClick", function()
+        addon.RunUI:ResetPosition()
+    end)
+
     -- Medal time visibility
     local showMedalTimeCheckbox = CreateCheckbox(appearanceFrame, "Show medal time")
     showMedalTimeCheckbox:SetPoint("TOPLEFT", moveButton, "BOTTOMLEFT", -4, -8)
