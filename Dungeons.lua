@@ -119,8 +119,7 @@ local MEDAL_LABELS = {
     "Gold",
     "Silver",
     "Bronze",
-    "No Medal",
-    ""
+    "No Medal"
 }
 
 local MEDAL_COLORS = {
@@ -130,7 +129,6 @@ local MEDAL_COLORS = {
     { 0.85, 0.85, 0.85 }, -- silver
     { 0.8,  0.55, 0.25 }, -- bronze
     { 1,    1,    1 },    -- no medal
-    { 1,    1,    1 }     -- incomplete run
 }
 
 local NO_MEDAL_INDEX = 6
