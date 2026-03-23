@@ -15,7 +15,6 @@ libs\LibScrollingTable-1.0\lib-st.xml
 
 Constants.lua
 Dungeons.lua
-Migrations.lua
 Utility.lua
 SplitProfile.lua
 RunUI.lua
