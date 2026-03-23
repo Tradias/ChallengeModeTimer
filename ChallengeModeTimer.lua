@@ -10,7 +10,7 @@ end
 local function SelectCurrentInstanceInRunHistory()
     local dungeonName, instanceType, difficultyId, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceId =
         GetInstanceInfo()
-    if addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId] then
+    if addon.Dungeons:Get(instanceId) then
         addon.RunHistoryUI.selectedInstanceId = instanceId
     end
 end

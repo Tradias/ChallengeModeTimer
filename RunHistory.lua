@@ -21,7 +21,7 @@ end
 function addon.RunHistory:Init()
     if not ChallengeModeTimerDB.runHistory then
         ChallengeModeTimerDB.runHistory = {}
-        for instanceId, _ in pairs(addon.Constants.CHALLENGE_MODE_DUNGEONS) do
+        for instanceId, _ in pairs(addon.Dungeons:Get()) do
             ChallengeModeTimerDB.runHistory[instanceId] = { runs = { addon.Run:CreateRun(instanceId) } }
         end
     end
@@ -95,8 +95,8 @@ function addon.RunHistory:SetComparisonRunIndex(instanceId, index)
 end
 
 function addon.RunHistory:InsertSampleRuns()
-    for instanceId, dungeonData in pairs(addon.Constants.CHALLENGE_MODE_DUNGEONS) do
-        local baseTime = dungeonData.medals[3] -- gold
+    for instanceId, dungeon in pairs(addon.Dungeons:Get()) do
+        local baseTime = dungeon.medals[3] -- gold
         local slowerTime = baseTime + 45
         local fasterTime = math.max(60, baseTime - 30)
         local partialTime = math.max(60, math.floor(baseTime * 0.4))

@@ -19,12 +19,11 @@ end
 
 local function BuildSortedInstanceIds()
     local instanceIds = {}
-    for instanceId, _ in pairs(addon.Constants.CHALLENGE_MODE_DUNGEONS) do
+    for instanceId, _ in pairs(addon.Dungeons:Get()) do
         table.insert(instanceIds, instanceId)
     end
     table.sort(instanceIds, function(a, b)
-        return addon.Constants.CHALLENGE_MODE_DUNGEONS[a].englishName <
-            addon.Constants.CHALLENGE_MODE_DUNGEONS[b].englishName
+        return addon.Dungeons:Get(a).name < addon.Dungeons:Get(b).name
     end)
     return instanceIds
 end
@@ -197,10 +196,10 @@ local function SendRunToChat(run, instanceId)
         return
     end
 
-    local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
-    local dungeonName = dungeonData.englishName
+    local dungeon = addon.Dungeons:Get(instanceId)
+    local dungeonName = dungeon.name
     local durationText = addon.Utility:FormatTime(run.duration, 3)
-    local medalLabel = addon.Constants:GetMedalInfo(instanceId, run.duration)
+    local medalLabel = addon.Dungeons:GetMedalInfo(instanceId, run.duration)
     SendMessageInCurrentChannel(editBox, string.format("%s - %s %s", dungeonName, durationText, medalLabel))
 
     local splitProfile = addon.SplitProfile:Get(instanceId)
@@ -299,8 +298,8 @@ function addon.RunHistoryUI:Init()
     dropdown:SetWidth(180)
     dropdown:SetupMenu(function(_, rootDescription)
         for _, instanceId in ipairs(self.instanceIds) do
-            local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
-            local button = rootDescription:CreateButton(dungeonData.englishName,
+            local dungeon = addon.Dungeons:Get(instanceId)
+            local button = rootDescription:CreateButton(dungeon.name,
                 function(v) self:SetSelectedInstance(v) end, instanceId)
             button:SetIsSelected(function(v) return v == self.selectedInstanceId end)
         end
@@ -496,8 +495,8 @@ function addon.RunHistoryUI:SelectBestFilteredRun()
 end
 
 function addon.RunHistoryUI:SetSelectedInstance(instanceId)
-    local dungeonData = addon.Constants.CHALLENGE_MODE_DUNGEONS[instanceId]
-    if not dungeonData then
+    local dungeon = addon.Dungeons:Get(instanceId)
+    if not dungeon then
         return
     end
     self.selectedInstanceId = instanceId

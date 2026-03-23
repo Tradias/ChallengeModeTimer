@@ -10,7 +10,7 @@ local g_currentInstanceId = 0
 local g_ticker = nil
 
 local function InitializeRuns()
-    for instanceId, _ in pairs(addon.Constants.CHALLENGE_MODE_DUNGEONS) do
+    for instanceId, _ in pairs(addon.Dungeons:Get()) do
         local currentRun = addon.RunHistory:GetCurrentRun(instanceId)
         -- Making a deep copy to ensure we are not hammering at ChallengeModeTimerDB while the run is running
         g_runs[instanceId] = addon.Utility:DeepCopy(currentRun)
@@ -343,7 +343,7 @@ local function OnWorldStateTimerStart()
     local dungeonName, instanceType, difficultyId, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceId =
         GetInstanceInfo()
     g_currentInstanceId = instanceId
-    if difficultyId == addon.Constants.CHALLENGE_MODE_DIFFICULTY_ID then
+    if difficultyId == addon.Dungeons.CHALLENGE_MODE_DIFFICULTY_ID then
         StartTimerCalibration(g_runs[g_currentInstanceId])
     end
 end
