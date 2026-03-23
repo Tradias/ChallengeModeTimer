@@ -190,7 +190,13 @@ end
 local function SetSplitTextJustifyH(splitLines, textKey, justifyH)
     for _, line in ipairs(splitLines) do
         local text = line[textKey]
+        -- Show the frame otherwise justifyH changes are not applied
+        local isShown = line.frame:IsShown()
+        line.frame:Show()
         text:SetJustifyH(justifyH)
+        if not isShown then
+            line.frame:Hide()
+        end
     end
 end
 
@@ -236,7 +242,6 @@ function addon.RunUI:Init()
         self:ResetPosition()
     end
     runFrame:SetFrameLevel(5000)
-    runFrame:SetClampedToScreen(true)
     runFrame:SetMovable(true)
     runFrame:EnableMouse(false)
     runFrame:RegisterForDrag("LeftButton")
@@ -461,6 +466,7 @@ function addon.RunUI:UpdateSplits()
         line.frame:Show()
     end
 
+    -- TODO
     for index = #run.splits + 1, #self.splitLines do
         self.splitLines[index].frame:Hide()
     end
