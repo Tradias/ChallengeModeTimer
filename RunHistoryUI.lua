@@ -102,6 +102,24 @@ local function FilterRow(filterText, rowData)
     return false
 end
 
+local function AddMedalLinesToTooltip(instanceId)
+    local dungeon = addon.Dungeons:Get(instanceId)
+    for medalIndex, medalTime in ipairs(dungeon.formattedMedalTimes) do
+        local label = addon.Dungeons:GetMedalLabelByIndex(medalIndex)
+        local color = addon.Dungeons:GetMedalColorByIndex(medalIndex)
+        GameTooltip:AddLine(string.format("%s %s", label, medalTime), color[1], color[2], color[3])
+    end
+end
+
+local function ShowMedalsTooltip(frame, instanceId)
+    GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
+    GameTooltip:SetText("Medals", 1, 0.82, 0)
+
+    AddMedalLinesToTooltip(instanceId)
+
+    GameTooltip:Show()
+end
+
 local function AddRunnerLinesToTooltip(run)
     for _, runner in ipairs(run.runners or {}) do
         local name = runner.name
@@ -119,7 +137,7 @@ local function ShowRunnersTooltip(frame, run)
     GameTooltip:Show()
 end
 
-local function AddSplitLinesToTooltip(run, instanceId)
+local function AddSplitLinesToTooltip(instanceId, run)
     local splitProfile = addon.SplitProfile:Get(instanceId)
     for index, split in ipairs(run.splits or {}) do
         local splitDefinition = splitProfile.splits[index]
@@ -133,11 +151,11 @@ local function AddSplitLinesToTooltip(run, instanceId)
     end
 end
 
-local function ShowRunSplitsTooltip(frame, run, instanceId)
+local function ShowRunSplitsTooltip(frame, instanceId, run)
     GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
     GameTooltip:SetText("Splits", 1, 0.82, 0)
 
-    AddSplitLinesToTooltip(run, instanceId)
+    AddSplitLinesToTooltip(instanceId, run)
 
     GameTooltip:Show()
 end
@@ -184,11 +202,16 @@ local function ShowBestRunTooltip(frame, table, instanceId)
     local rowData = table:GetRow(bestIndex)
     local run = rowData.run
     GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
-    GameTooltip:SetText(addon.Utility:FormatTime(run.duration, 3), 1, 0.82, 0)
+    local header = addon.Utility:FormatTime(run.duration, 3)
+    if run.medalIndex then
+        local medalLabel = addon.Dungeons:GetMedalLabelByIndex(run.medalIndex)
+        header = string.format("%s %s", header, medalLabel)
+    end
+    GameTooltip:SetText(header, 1, 0.82, 0)
     GameTooltip:AddLine(FormatRunDate(run.startTimestamp), 1, 1, 1)
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine("Splits", 1, 0.82, 0)
-    AddSplitLinesToTooltip(run, instanceId)
+    AddSplitLinesToTooltip(instanceId, run)
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine("Runners", 1, 0.82, 0)
     AddRunnerLinesToTooltip(run)
@@ -206,7 +229,7 @@ local function SendMessageInCurrentChannel(editBox, text)
     C_ChatInfo.SendChatMessage(text, chatType, nil, target)
 end
 
-local function SendRunToChat(run, instanceId)
+local function SendRunToChat(instanceId, run)
     local editBox = ChatEdit_GetActiveWindow()
     if not editBox then
         print("Press enter and try again")
@@ -441,7 +464,7 @@ function addon.RunHistoryUI:CreateTable()
             if button == "LeftButton" and realrow then
                 if IsShiftKeyDown() then
                     local rowData = table:GetRow(realrow)
-                    SendRunToChat(rowData.run, self.selectedInstanceId)
+                    SendRunToChat(self.selectedInstanceId, rowData.run)
                     return true
                 end
                 SetComparisonRunIndex(table, self.selectedInstanceId, realrow)
@@ -455,8 +478,10 @@ function addon.RunHistoryUI:CreateTable()
             local rowData = table:GetRow(realrow)
             if column == RUNNER_COLUMN_INDEX then
                 ShowRunnersTooltip(cellFrame, rowData.run)
+            elseif column == MEDAL_COLUMN_INDEX then
+                ShowMedalsTooltip(cellFrame, self.selectedInstanceId)
             else
-                ShowRunSplitsTooltip(cellFrame, rowData.run, self.selectedInstanceId)
+                ShowRunSplitsTooltip(cellFrame, self.selectedInstanceId, rowData.run)
             end
             return false
         end,
