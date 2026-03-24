@@ -473,6 +473,9 @@ function addon.RunHistoryUI:CreateTable()
         end,
         OnEnter = function(rowFrame, cellFrame, data, cols, row, realrow, column, table)
             if not realrow then
+                if column and column == MEDAL_COLUMN_INDEX then
+                    ShowMedalsTooltip(cellFrame, self.selectedInstanceId)
+                end
                 return false
             end
             local rowData = table:GetRow(realrow)
