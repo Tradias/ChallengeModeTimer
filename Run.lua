@@ -395,7 +395,9 @@ function addon.Run:CreateSampleRun(instanceId, totalTime, completed, secondsAgo)
     run.state.startTime = GetTime() - totalTime
     run.startTimestamp = time() - startOffset - totalTime
     run.duration = RoundDuration(totalTime)
-    run.medalIndex = addon.Dungeons:GetMedalIndexByDuration(instanceId, run.duration)
+    if run.completed then
+        run.medalIndex = addon.Dungeons:GetMedalIndexByDuration(instanceId, run.duration)
+    end
 
     local splitCount = #run.splits
     local completedSplits = completed and splitCount or math.max(1, math.floor(splitCount / 2))
