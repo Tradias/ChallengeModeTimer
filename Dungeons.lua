@@ -122,6 +122,14 @@ local MEDAL_LABELS = {
     "No Medal"
 }
 
+local MEDAL_LABELS_LOWERCASE = {
+    ["title"] = true
+}
+
+for _, label in ipairs(MEDAL_LABELS) do
+    MEDAL_LABELS_LOWERCASE[string.lower(label)] = true
+end
+
 local MEDAL_COLORS = {
     { 0.3,  0.8,  1 },    -- title
     { 0.9,  0.9,  1 },    -- platinum
@@ -172,13 +180,5 @@ function addon.Dungeons:GetMedalInfoByDuration(instanceId, runDuration)
 end
 
 function addon.Dungeons:IsMedalLabel(text)
-    if text == "title" then
-        return true
-    end
-    for _, label in ipairs(MEDAL_LABELS) do
-        if string.lower(label) == text then
-            return true
-        end
-    end
-    return false
+    return not not MEDAL_LABELS_LOWERCASE[text]
 end
