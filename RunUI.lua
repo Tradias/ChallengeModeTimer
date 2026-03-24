@@ -54,6 +54,15 @@ local function CreateMedalText(runFrame)
     return medalText
 end
 
+local function CreateUnlockedHint(runFrame)
+    local unlockedHint = runFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    unlockedHint:SetText("unlocked")
+    unlockedHint:SetTextColor(0.7, 0.7, 0.7, 1)
+    unlockedHint:SetFont(addon.Constants.FONT, 12, "OUTLINE")
+    unlockedHint:SetJustifyH("LEFT")
+    return unlockedHint
+end
+
 local function GetTimerScale()
     return ChallengeModeTimerDB.runUI.timerScale or 1
 end
@@ -246,6 +255,10 @@ function addon.RunUI:Init()
     runFrame:EnableMouse(false)
     runFrame:RegisterForDrag("LeftButton")
 
+    self.unlockedHint = CreateUnlockedHint(runFrame)
+    self.unlockedHint:SetPoint("TOPLEFT", runFrame, "TOPLEFT", 0, 0)
+    self.unlockedHint:Hide()
+
     local timerFrame = CreateFrame("Frame", nil, runFrame)
     timerFrame:SetPoint("TOPLEFT", runFrame, "TOPLEFT", 0, 0)
     timerFrame:SetPoint("TOPRIGHT", runFrame, "TOPRIGHT", 0, 0)
@@ -287,6 +300,10 @@ function addon.RunUI:Init()
     self.moveModeEnabled = false
 end
 
+function addon.RunUI:ShowUnlockedHint(isShow)
+    self.unlockedHint:SetShown(isShow)
+end
+
 function addon.RunUI:SetMoveMode(enabled)
     if enabled == self.moveModeEnabled then
         return
@@ -295,6 +312,7 @@ function addon.RunUI:SetMoveMode(enabled)
     self.moveModeEnabled = enabled
     self.runFrame:EnableMouse(enabled)
     self.splitsFrame:EnableMouse(enabled)
+    self:ShowUnlockedHint(enabled)
 end
 
 function addon.RunUI:IsMoveModeEnabled()

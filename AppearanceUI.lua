@@ -54,14 +54,22 @@ local function InitializeJustifyDropdown(dropdown, isSelected, onSelect)
     MenuUtil.CreateRadioMenu(dropdown,
         isSelected,
         onSelect,
-        { "Left",   "LEFT" },
+        { "Left", "LEFT" },
         { "Center", "CENTER" },
-        { "Right",  "RIGHT" }
+        { "Right", "RIGHT" }
     )
 end
 
 function addon.AppearanceUI:Init()
     local appearanceFrame = addon.OptionsUI:GetAppearanceFrame()
+
+    appearanceFrame:HookScript("OnShow", function()
+        addon.RunUI:ShowUnlockedHint(addon.RunUI:IsMoveModeEnabled())
+    end)
+
+    appearanceFrame:HookScript("OnHide", function()
+        addon.RunUI:ShowUnlockedHint(false)
+    end)
 
     -- Timer position
     local moveButton = CreateFrame("Button", nil, appearanceFrame, "UIPanelButtonTemplate")
