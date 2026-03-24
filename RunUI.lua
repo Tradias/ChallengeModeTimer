@@ -466,7 +466,6 @@ function addon.RunUI:UpdateSplits()
         line.frame:Show()
     end
 
-    -- TODO
     for index = #run.splits + 1, #self.splitLines do
         self.splitLines[index].frame:Hide()
     end
