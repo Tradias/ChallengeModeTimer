@@ -7,7 +7,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [960] = {
         name = "Temple of the Jade Serpent",
         medals = {
-            330,  -- title 5:30
+            480,  -- title 8:00
             615,  -- platinum 10:15
             900,  -- gold 15:00
             1500, -- silver 25:00
@@ -17,7 +17,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [961] = {
         name = "Stormstout Brewery",
         medals = {
-            390,  -- title 6:30
+            375,  -- title 6:15
             495,  -- platinum 8:15
             720,  -- gold 12:00
             1260, -- silver 21:00
@@ -27,7 +27,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [962] = {
         name = "Gate of the Setting Sun",
         medals = {
-            330,  -- title 5:30
+            315,  -- title 5:15
             480,  -- platinum 8:00
             780,  -- gold 13:00
             1320, -- silver 22:00
@@ -37,7 +37,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [959] = {
         name = "Shado-Pan Monastery",
         medals = {
-            630,  -- title 10:30
+            600,  -- title 10:00
             840,  -- platinum 14:00
             1260, -- gold 21:00
             2100, -- silver 35:00
@@ -47,7 +47,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [1011] = {
         name = "Siege of Niuzao Temple",
         medals = {
-            615,  -- title 10:15
+            585,  -- title 9:45
             735,  -- platinum 12:15
             1050, -- gold 17:30
             1800, -- silver 30:00
@@ -57,7 +57,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [994] = {
         name = "Mogu'shan Palace",
         medals = {
-            405,  -- title 6:45
+            380,  -- title 6:20
             495,  -- platinum 8:15
             720,  -- gold 12:00
             1440, -- silver 24:00
@@ -67,7 +67,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [1007] = {
         name = "Scholomance",
         medals = {
-            435,  -- title 7:15
+            405,  -- title 6:45
             615,  -- platinum 10:15
             1140, -- gold 19:00
             1980, -- silver 33:00
@@ -77,7 +77,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [1001] = {
         name = "Scarlet Halls",
         medals = {
-            255,  -- title 4:15
+            240,  -- title 4:00
             480,  -- platinum 8:00
             780,  -- gold 13:00
             1320, -- silver 22:00
@@ -87,7 +87,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [1004] = {
         name = "Scarlet Monastery",
         medals = {
-            330,  -- title 5:30
+            315,  -- title 5:15
             540,  -- platinum 9:00
             780,  -- gold 13:00
             1320, -- silver 22:00
