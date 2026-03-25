@@ -43,6 +43,6 @@ end
 
 function addon.Utility:DebugPrint(text)
     if self.isDebugMode then
-        print(text)
+        DevTools_Dump(text)
     end
 end

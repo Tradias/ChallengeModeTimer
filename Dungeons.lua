@@ -182,12 +182,12 @@ function addon.Dungeons:GetMedalIndexByDuration(instanceId, runDuration)
     return NO_MEDAL_INDEX
 end
 
-function addon.Dungeons:GetMedalIndexByDurationOrKeystoneUpgradeLevel(instanceId, runDuration, keystoneUpgradeLevel)
+function addon.Dungeons:GetMedalIndexByDurationOrKeystoneUpgradeLevel(instanceId, runDuration, keystoneUpgradeLevels)
     local dungeon = CHALLENGE_MODE_DUNGEONS[instanceId]
     if runDuration < dungeon.medals[1] then
         return 1
     end
-    return KEYSTONE_UPGRADE_LEVEL_TO_MEDAL_INDEX[keystoneUpgradeLevel]
+    return KEYSTONE_UPGRADE_LEVEL_TO_MEDAL_INDEX[keystoneUpgradeLevels]
 end
 
 function addon.Dungeons:GetMedalLabelByIndex(medalIndex)

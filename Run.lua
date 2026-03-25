@@ -307,7 +307,7 @@ local function OnRunEnd(run, challengeCompletionInfo)
         run.completed = true
         run.duration = challengeCompletionInfo.time / 1000
         run.medalIndex = addon.Dungeons:GetMedalIndexByDurationOrKeystoneUpgradeLevel(instanceId, run.duration,
-            challengeCompletionInfo.keystoneUpgradeLevel)
+            challengeCompletionInfo.keystoneUpgradeLevels)
         run.runners = BuildRunnersFromChallengeCompletionInfo(challengeCompletionInfo)
         CompleteFinalSplit(run)
     end
@@ -339,19 +339,15 @@ local function OnChallengeModeReset()
 end
 
 local function OnChallengeModeCompleted()
-    local run = g_runs[g_currentInstanceId]
     local challengeCompletionInfo = C_ChallengeMode.GetChallengeCompletionInfo()
+    addon.Utility:DebugPrint(challengeCompletionInfo)
+    local instanceId = addon.Dungeons:GetInstanceIdByChallengeModeMapId(challengeCompletionInfo.mapChallengeModeID)
+    if not instanceId then
+        return
+    end
+    local run = g_runs[instanceId]
     if not run then
-        print("Challenge completed outside of dungeon - please report bug")
-        DevTools_Dump(challengeCompletionInfo)
-        local instanceId = addon.Dungeons:GetInstanceIdByChallengeModeMapId(challengeCompletionInfo.mapChallengeModeID)
-        if not instanceId then
-            return
-        end
-        run = g_runs[instanceId]
-        if not run then
-            return
-        end
+        return
     end
     MaybeEndRun(run, challengeCompletionInfo)
 end
