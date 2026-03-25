@@ -199,3 +199,91 @@ Inside a once started CM dungeon, nil otherwise:
 }
 
 LE_SCENARIO_TYPE_CHALLENGE_MODE == 1
+
+## C_ChallengeMode.GetMapTable()
+
+[1]={
+  [1]=2,
+  [2]=56,
+  [3]=57,
+  [4]=58,
+  [5]=59,
+  [6]=60,
+  [7]=76,
+  [8]=77,
+  [9]=78
+}
+
+## C_ChallengeMode.GetMapUIInfo(mapChallengeModeID)
+
+C_ChallengeMode.GetMapUIInfo(2)
+[1]="Temple of the Jade Serpent",
+[2]=2,
+[3]=2700,
+[4]=632363,
+[5]=632283,
+[6]=960
+
+C_ChallengeMode.GetMapUIInfo(56)
+[1]="Stormstout Brewery",
+[2]=56,
+[3]=2700,
+[4]=632362,
+[5]=632282,
+[6]=961
+
+C_ChallengeMode.GetMapUIInfo(57)
+[1]="Gate of the Setting Sun",
+[2]=57,
+[3]=2700,
+[4]=632357,
+[5]=632277,
+[6]=962
+
+C_ChallengeMode.GetMapUIInfo(58)
+[1]="Shado-Pan Monastery",
+[2]=58,
+[3]=3600,
+[4]=632361,
+[5]=632281,
+[6]=959
+
+C_ChallengeMode.GetMapUIInfo(59)
+[1]="Siege of Niuzao Temple",
+[2]=59,
+[3]=3000,
+[4]=643269,
+[5]=643266,
+[6]=1011
+
+C_ChallengeMode.GetMapUIInfo(60)
+[1]="Mogu'shan Palace",
+[2]=60,
+[3]=2700,
+[4]=632359,
+[5]=632279,
+[6]=994
+
+C_ChallengeMode.GetMapUIInfo(76)
+[1]="Scholomance",
+[2]=76,
+[3]=3300,
+[4]=136355,
+[5]=608254,
+[6]=1007
+
+C_ChallengeMode.GetMapUIInfo(77)
+[1]="Scarlet Halls",
+[2]=77,
+[3]=2700,
+[4]=643268,
+[5]=643265,
+[6]=1001
+
+C_ChallengeMode.GetMapUIInfo(78)
+[1]="Scarlet Monastery",
+[2]=78,
+[3]=2700,
+[4]=136354,
+[5]=608253,
+[6]=1004

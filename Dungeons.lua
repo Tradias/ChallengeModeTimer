@@ -141,6 +141,26 @@ local MEDAL_COLORS = {
 
 local NO_MEDAL_INDEX = 6
 
+local KEYSTONE_UPGRADE_LEVEL_TO_MEDAL_INDEX = {
+    [4] = 2,
+    [3] = 3,
+    [2] = 4,
+    [1] = 5,
+    [0] = NO_MEDAL_INDEX,
+}
+
+local MAP_CHALLENGE_MODE_ID_TO_INSTANCE_ID = {
+    [2] = 960,   -- Temple of the Jade Serpent
+    [56] = 961,  -- Stormstout Brewery
+    [57] = 962,  -- Gate of the Setting Sun
+    [58] = 959,  -- Shado-Pan Monastery
+    [59] = 1011, -- Siege of Niuzao Temple
+    [60] = 994,  -- Mogu'shan Palace
+    [76] = 1007, -- Scholomance
+    [77] = 1001, -- Scarlet Halls
+    [78] = 1004, -- Scarlet Monastery
+}
+
 addon.Dungeons.INCOMPLETE_MEDAL_INDEX = 7
 
 addon.Dungeons.CHALLENGE_MODE_DIFFICULTY_ID = 8
@@ -162,6 +182,14 @@ function addon.Dungeons:GetMedalIndexByDuration(instanceId, runDuration)
     return NO_MEDAL_INDEX
 end
 
+function addon.Dungeons:GetMedalIndexByDurationOrKeystoneUpgradeLevel(instanceId, runDuration, keystoneUpgradeLevel)
+    local dungeon = CHALLENGE_MODE_DUNGEONS[instanceId]
+    if runDuration < dungeon.medals[1] then
+        return 1
+    end
+    return KEYSTONE_UPGRADE_LEVEL_TO_MEDAL_INDEX[keystoneUpgradeLevel]
+end
+
 function addon.Dungeons:GetMedalLabelByIndex(medalIndex)
     return MEDAL_LABELS[medalIndex]
 end
@@ -181,4 +209,8 @@ end
 
 function addon.Dungeons:IsMedalLabel(text)
     return not not MEDAL_LABELS_LOWERCASE[text]
+end
+
+function addon.Dungeons:GetInstanceIdByChallengeModeMapId(challengeModeMapId)
+    return MAP_CHALLENGE_MODE_ID_TO_INSTANCE_ID[challengeModeMapId]
 end
