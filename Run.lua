@@ -162,6 +162,19 @@ local function AddPendingSplitUpdate(run, index)
     table.insert(run.state.pendingSplitUpdateIndices, index)
 end
 
+local function HasOnlyOneIncompleteSplit(run)
+    local count = 0
+    for _, split in ipairs(run.splits) do
+        if not split.completed then
+            if count == 1 then
+                return false
+            end
+            count = count + 1
+        end
+    end
+    return count == 1
+end
+
 local function UpdateSplit(run, split, splitDefinition)
     local isUpdated = false
     local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(splitDefinition.criteriaIndex)
@@ -189,6 +202,9 @@ local function UpdateSplit(run, split, splitDefinition)
         split.quantity = splitDefinition.totalQuantity
     end
     if not split.completed and criteriaInfo.completed then
+        if HasOnlyOneIncompleteSplit(run) then
+            return isUpdated
+        end
         if run.state.isStartTimeAccurate then
             isUpdated = true
             split.completed = true
@@ -227,6 +243,25 @@ local function UpdateCriteriaSplit(criteriaId)
         end
     end
     return false
+end
+
+local function CompleteFinalSplit(run)
+    -- Set duration of the final split but only if there is only one incomplete split
+    local splitProfile = addon.SplitProfile:Get(run.state.instanceId)
+    local finalSplit
+    local incompleteSplitCount = 0
+    for index, split in ipairs(run.splits) do
+        if not split.completed then
+            incompleteSplitCount = incompleteSplitCount + 1
+            split.completed = true
+            local splitDefinition = splitProfile.splits[index]
+            split.quantity = splitDefinition.totalQuantity
+            finalSplit = split
+        end
+    end
+    if incompleteSplitCount == 1 then
+        finalSplit.duration = run.duration
+    end
 end
 
 local function OnRunStart(run, worldElapsedTime)
@@ -274,6 +309,7 @@ local function OnRunEnd(run, challengeCompletionInfo)
         run.medalIndex = addon.Dungeons:GetMedalIndexByDurationOrKeystoneUpgradeLevel(instanceId, run.duration,
             challengeCompletionInfo.keystoneUpgradeLevel)
         run.runners = BuildRunnersFromChallengeCompletionInfo(challengeCompletionInfo)
+        CompleteFinalSplit(run)
     end
     local nextRun = addon.RunHistory:PersistCurrentRun(run)
     nextRun = addon.Utility:DeepCopy(nextRun)

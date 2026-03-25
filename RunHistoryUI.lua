@@ -29,7 +29,7 @@ local function BuildSortedInstanceIds()
 end
 
 local function BuildSplitDurationText(split)
-    if split and split.completed and split.duration ~= 0 then
+    if split.completed and split.duration ~= 0 then
         return addon.Utility:FormatTime(split.duration)
     end
     return "-"
