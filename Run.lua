@@ -424,7 +424,7 @@ function addon.Run:SetSampleRun()
         return
     end
     local instanceId = 1004
-    local runTime = 450
+    local runTime = 390
     runTime = runTime + math.random()
     local sampleRun = addon.Run:CreateSampleRun(instanceId, runTime, true, 86400 * 3)
     sampleRun.previousRun = g_currentRun

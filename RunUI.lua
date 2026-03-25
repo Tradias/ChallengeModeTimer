@@ -8,18 +8,19 @@ local function FormatTimeParts(seconds)
     local minutes = math.floor(seconds / 60)
     local secs = math.floor(seconds % 60)
     local tenths = math.floor((seconds % 1) * 10)
-    local minutesText
+    local minutesText = ""
+    local colonText = ""
     local secondsText
     if minutes == 0 then
-        minutesText = ""
         secondsText = string.format("%02d", secs)
     else
-        minutesText = string.format("%d:", minutes)
+        minutesText = string.format("%d", minutes)
+        colonText = ":"
         secondsText = string.format("%02d", secs)
     end
     local secondsTensText = string.sub(secondsText, 1, 1)
     local secondsOnesText = string.sub(secondsText, 2, 2)
-    return minutesText, secondsTensText, secondsOnesText, ".", string.format("%01d", tenths)
+    return minutesText, colonText, secondsTensText, secondsOnesText, ".", string.format("%01d", tenths)
 end
 
 local function CreateTimerTextPart(runFrame)
@@ -32,16 +33,19 @@ end
 local function CreateTimerText(runFrame)
     local timerText = {
         minutes = CreateTimerTextPart(runFrame),
+        colon = CreateTimerTextPart(runFrame),
         secondsTens = CreateTimerTextPart(runFrame),
         secondsOnes = CreateTimerTextPart(runFrame),
         dot = CreateTimerTextPart(runFrame),
         milliseconds = CreateTimerTextPart(runFrame),
     }
-    timerText.minutes:SetPoint("RIGHT", runFrame, "CENTER", -20, 0)
+    timerText.minutes:SetPoint("RIGHT", runFrame, "CENTER", -31, 0)
+    timerText.colon:SetPoint("RIGHT", runFrame, "CENTER", -23.5, 0)
     timerText.secondsTens:SetPoint("CENTER", runFrame, "CENTER", -15, 0)
     timerText.secondsOnes:SetPoint("CENTER", runFrame, "CENTER", 0, 0)
-    timerText.dot:SetPoint("CENTER", runFrame, "CENTER", 9, 0)
-    timerText.milliseconds:SetPoint("CENTER", runFrame, "CENTER", 19, -2.5)
+    timerText.dot:SetPoint("CENTER", runFrame, "CENTER", 10, -2.5)
+    timerText.dot:SetFont(addon.Constants.FONT, 14, "OUTLINE")
+    timerText.milliseconds:SetPoint("CENTER", runFrame, "CENTER", 17.5, -2.5)
     timerText.milliseconds:SetFont(addon.Constants.FONT, 14, "OUTLINE")
     return timerText
 end
@@ -210,8 +214,9 @@ local function SetSplitTextJustifyH(splitLines, textKey, justifyH)
 end
 
 function addon.RunUI:UpdateTimerText(runDuration)
-    local minutesText, secondsTensText, secondsOnesText, dotText, tenthsText = FormatTimeParts(runDuration)
+    local minutesText, colonText, secondsTensText, secondsOnesText, dotText, tenthsText = FormatTimeParts(runDuration)
     self.timerText.minutes:SetText(minutesText)
+    self.timerText.colon:SetText(colonText)
     self.timerText.secondsTens:SetText(secondsTensText)
     self.timerText.secondsOnes:SetText(secondsOnesText)
     self.timerText.dot:SetText(dotText)
