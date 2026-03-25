@@ -206,7 +206,7 @@ local function UpdatePendingSplits(run)
     local pendingSplitUpdateIndices = run.state.pendingSplitUpdateIndices
     run.state.pendingSplitUpdateIndices = {}
     for _, splitUpdateIndex in ipairs(pendingSplitUpdateIndices) do
-        isUpdated = UpdateSplit(run, run.splits[splitUpdateIndex], splitProfile.splits[splitUpdateIndex])
+        isUpdated = UpdateSplit(run, run.splits[splitUpdateIndex], splitProfile.splits[splitUpdateIndex]) or isUpdated
     end
     if isUpdated then
         addon.RunUI:UpdateSplits()
