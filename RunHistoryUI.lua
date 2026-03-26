@@ -257,7 +257,7 @@ local function SendRunToChat(instanceId, run)
     end
 end
 
-local function SetComparisonRunIndex(table, instanceId, index)
+local function UpdateComparisonRunIndex(table, instanceId, index)
     local isAlreadySelected = (table:GetSelection() == index)
     if isAlreadySelected then
         addon.RunHistory:SetComparisonRunIndex(instanceId, nil)
@@ -384,6 +384,7 @@ function addon.RunHistoryUI:Init()
         end
         self.filterText = filterBox:GetText()
         self.table:SortData()
+        self:UpdateComparisonHint()
     end)
     filterBox:SetScript("OnEditFocusGained", function()
         if isPlaceholder then
@@ -429,6 +430,14 @@ function addon.RunHistoryUI:CreateTable()
     tableFrame.frame:SetPoint("TOPLEFT", self.dropdown, "BOTTOMLEFT", -10, -30)
     tableFrame.frame:SetPoint("BOTTOMRIGHT", self.runsFrame, "BOTTOMRIGHT", 0, 0)
 
+    local comparisonHint = tableFrame.frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    comparisonHint:SetPoint("BOTTOM", tableFrame.frame, "BOTTOM", 0, 8)
+    comparisonHint:SetText("↑ click on a run to compare against ↑")
+    comparisonHint:SetTextColor(0.7, 0.7, 0.7)
+    SetFont(comparisonHint, 11)
+    comparisonHint:Hide()
+    self.comparisonHint = comparisonHint
+
     local function SetTableFonts()
         for _, col in ipairs(tableFrame.head.cols) do
             SetFont(col:GetFontString(), 13)
@@ -467,7 +476,9 @@ function addon.RunHistoryUI:CreateTable()
                     SendRunToChat(self.selectedInstanceId, rowData.run)
                     return true
                 end
-                SetComparisonRunIndex(table, self.selectedInstanceId, realrow)
+                UpdateComparisonRunIndex(table, self.selectedInstanceId, realrow)
+                local isAlreadySelected = (table:GetSelection() == realrow)
+                self:UpdateComparisonHint(not isAlreadySelected)
             end
             return false
         end,
@@ -525,6 +536,7 @@ function addon.RunHistoryUI:SyncSelectionAndComparisonRun()
     else
         self.table:ClearSelection()
     end
+    self:UpdateComparisonHint()
 end
 
 function addon.RunHistoryUI:Refresh()
@@ -542,6 +554,18 @@ function addon.RunHistoryUI:SelectBestFilteredRun()
     if index then
         self.table:SetSelection(index)
         addon.RunHistory:SetComparisonRunIndex(self.selectedInstanceId, index)
+    end
+    self:UpdateComparisonHint()
+end
+
+function addon.RunHistoryUI:UpdateComparisonHint(hasSelection)
+    if hasSelection == nil then
+        hasSelection = self.table:GetSelection()
+    end
+    if hasSelection or #self.table.filtered == 0 or #self.table.filtered >= self.table.displayRows then
+        self.comparisonHint:Hide()
+    else
+        self.comparisonHint:Show()
     end
 end
 
