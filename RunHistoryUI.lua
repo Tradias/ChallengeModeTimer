@@ -157,6 +157,8 @@ local function ShowRunSplitsTooltip(frame, instanceId, run)
 
     AddSplitLinesToTooltip(instanceId, run)
 
+    GameTooltip:AddLine("\nShift-click to share in chat", 1, 1, 1)
+
     GameTooltip:Show()
 end
 
