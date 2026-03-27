@@ -40,6 +40,13 @@ local function OnSlashCommand(msg)
     elseif msg == "debug" then
         addon.Utility:ToggleDebugMode()
         return
+    elseif msg ~= "" then
+        local number = tonumber(msg)
+        if number then
+            addon.Run:SetSampleRun(number)
+            addon.RunUI:Show()
+            return
+        end
     end
 
     if addon.OptionsUI.optionsFrame:IsShown() then

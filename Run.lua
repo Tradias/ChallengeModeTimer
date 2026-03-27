@@ -484,13 +484,11 @@ function addon.Run:CreateSampleRun(instanceId, totalTime, completed, secondsAgo)
     return run
 end
 
-function addon.Run:SetSampleRun()
-    if self.sampleRun then
-        return
-    end
+function addon.Run:SetSampleRun(runTime)
     local instanceId = 1004
-    local runTime = 390
-    runTime = runTime + math.random()
+    if not runTime then
+        runTime = 390.4
+    end
     local sampleRun = addon.Run:CreateSampleRun(instanceId, runTime, true, 86400 * 3)
     sampleRun.previousRun = g_currentRun
     sampleRun.originalGetComparisonRun = addon.RunHistory.GetComparisonRun

@@ -7,7 +7,7 @@ local RUN_UI_WIDTH = 300
 local function FormatTimeParts(seconds)
     local minutes = math.floor(seconds / 60)
     local secs = math.floor(seconds % 60)
-    local tenths = math.floor((seconds % 1) * 10)
+    local tenths = math.floor((seconds % 1) * 10 + 0.0005) -- input has millisecond accuracy
     local minutesText = ""
     local colonText = ""
     local secondsText
@@ -39,8 +39,8 @@ local function CreateTimerText(runFrame)
         dot = CreateTimerTextPart(runFrame),
         milliseconds = CreateTimerTextPart(runFrame),
     }
-    timerText.minutes:SetPoint("RIGHT", runFrame, "CENTER", -31, 0)
-    timerText.colon:SetPoint("RIGHT", runFrame, "CENTER", -23.5, 0)
+    timerText.minutes:SetPoint("RIGHT", runFrame, "CENTER", -28.5, 0)
+    timerText.colon:SetPoint("RIGHT", runFrame, "CENTER", -22, 0)
     timerText.secondsTens:SetPoint("CENTER", runFrame, "CENTER", -15, 0)
     timerText.secondsOnes:SetPoint("CENTER", runFrame, "CENTER", 0, 0)
     timerText.dot:SetPoint("CENTER", runFrame, "CENTER", 10, -2.5)
