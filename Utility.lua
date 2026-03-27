@@ -8,7 +8,8 @@ function addon.Utility:FormatTime(seconds, precision)
     local tenths = math.floor((seconds % 1) * 10)
     local tenthsFormatString = "%01d"
     if precision then
-        tenths = math.floor((seconds % 1) * math.pow(10, precision))
+        local thousands = math.pow(10, precision)
+        tenths = math.floor((seconds % 1) * thousands + 0.5 / thousands)
         tenthsFormatString = string.format("%%0%dd", precision)
     end
     if minutes == 0 then
