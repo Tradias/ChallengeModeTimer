@@ -54,16 +54,22 @@ function addon.RunHistory:UpdateCurrentRun(run)
 end
 
 function addon.RunHistory:PersistCurrentRun(run)
+    -- Keep the most recently failed run, otherwise store only runs with at least one completed split
     local instanceId = run.state.instanceId
     local runs = GetRunHistory(instanceId).runs
     local nextRun = addon.Run:CreateRun(instanceId)
-    if HasAtLeastOneCompletedSplit(run) then
-        run.state = nil
-        runs[#runs] = run
+    run.state = nil
+    if #runs < 2 then
+        runs[1] = run
         table.insert(runs, nextRun)
-        addon.RunHistoryUI:Refresh()
     else
-        runs[#runs] = nextRun
+        if not HasAtLeastOneCompletedSplit(runs[#runs - 1]) then
+            runs[#runs - 1] = run
+            runs[#runs] = nextRun
+        else
+            runs[#runs] = run
+            table.insert(runs, nextRun)
+        end
     end
     return nextRun
 end
@@ -73,7 +79,10 @@ function addon.RunHistory:GetHistoricalRuns(instanceId)
     if HasAtLeastOneCompletedSplit(runs[#runs]) then
         return runs, #runs
     end
-    return runs, #runs - 1
+    if #runs > 1 and HasAtLeastOneCompletedSplit(runs[#runs - 1]) then
+        return runs, #runs - 1
+    end
+    return runs, #runs - 2
 end
 
 function addon.RunHistory:GetComparisonRun(instanceId)
