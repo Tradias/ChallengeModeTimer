@@ -343,7 +343,7 @@ function addon.RunHistoryUI:Init()
     local dropdown = CreateFrame("DropdownButton", "ChallengeModeTimerRunHistoryDropdown", runsFrame,
         "WowStyle1DropdownTemplate")
     dropdown:SetPoint("TOPLEFT", runsFrame, "TOPLEFT", 10, 0)
-    dropdown:SetWidth(180)
+    dropdown:SetWidth(200)
     dropdown:SetupMenu(function(_, rootDescription)
         for _, instanceId in ipairs(self.instanceIds) do
             local dungeon = addon.Dungeons:Get(instanceId)
@@ -356,7 +356,7 @@ function addon.RunHistoryUI:Init()
 
     -- Filter
     local filterBox = CreateFrame("EditBox", nil, runsFrame, "InputBoxTemplate")
-    filterBox:SetSize(170, 20)
+    filterBox:SetSize(150, 20)
     filterBox:SetPoint("LEFT", dropdown, "RIGHT", 25, 0)
     filterBox:SetAutoFocus(false)
     SetFont(filterBox, 12)
