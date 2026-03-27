@@ -209,6 +209,10 @@ local function UpdateSplit(run, split, splitDefinition)
             isUpdated = true
             split.completed = true
             split.duration = RoundDuration(GetTime() - run.state.startTime - criteriaInfo.elapsed)
+        elseif splitDefinition.criteriaIndex == 20673 then
+            -- Lorewalker Stonestep `criteriaInfo.elapsed` is always 0
+            isUpdated = true
+            split.completed = true
         else
             AddPendingSplitUpdate(run, splitDefinition.criteriaIndex)
         end
