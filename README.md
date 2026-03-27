@@ -1,5 +1,7 @@
 Challenge Mode timer that measures time to complete each objective and keeps a run history. Compare with previous runs in real time, similar to speedrun tools like LiveSplit.
 
+[Download from curseforge](https://www.curseforge.com/wow/addons/challengemodetimer)
+
 # Features
 
 * Tenth-of-a-second accurate Challenge Mode timer
