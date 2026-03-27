@@ -56,24 +56,6 @@ local function BuildRunnerNameText(run)
     return string.format("|c%s%s|r", colorStr, player.name)
 end
 
-local function GetSortDirection(table, sortby)
-    local column = table.cols[sortby]
-    return column.sort or column.defaultsort
-end
-
-local function CompareRowValues(tableFrame, rowa, rowb, sortby, valueGetter)
-    local aValue = valueGetter(tableFrame.data[rowa])
-    local bValue = valueGetter(tableFrame.data[rowb])
-    if aValue == bValue then
-        return false
-    end
-    local direction = GetSortDirection(tableFrame, sortby)
-    if direction == addon.LST.SORT_ASC then
-        return aValue < bValue
-    end
-    return aValue > bValue
-end
-
 local function RemoveColorCode(text)
     return string.sub(text, 11, -3)
 end
@@ -268,6 +250,21 @@ local function UpdateComparisonRunIndex(table, instanceId, index)
     end
 end
 
+local function GetSortDirection(table, sortby)
+    local column = table.cols[sortby]
+    return column.sort or column.defaultsort
+end
+
+local function CompareRowValues(tableFrame, rowa, rowb, sortby, lessThan)
+    local aRow = tableFrame.data[rowa]
+    local bRow = tableFrame.data[rowb]
+    local direction = GetSortDirection(tableFrame, sortby)
+    if direction == addon.LST.SORT_ASC then
+        return lessThan(aRow, bRow)
+    end
+    return lessThan(bRow, aRow)
+end
+
 local function BuildColumns()
     return {
         {
@@ -278,8 +275,11 @@ local function BuildColumns()
             sort = addon.LST.SORT_DSC,
             defaultsort = addon.LST.SORT_DSC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
-                return CompareRowValues(tableFrame, rowa, rowb, sortby, function(row)
-                    return row.run.startTimestamp or 0
+                return CompareRowValues(tableFrame, rowa, rowb, sortby, function(a, b)
+                    local aStartTimestamp = a.run.startTimestamp
+                    local bStartTimestamp = b.run.startTimestamp
+                    return aStartTimestamp < bStartTimestamp or
+                        (aStartTimestamp == bStartTimestamp and rowa < rowb)
                 end)
             end
         },
@@ -290,8 +290,12 @@ local function BuildColumns()
             index = 2,
             defaultsort = addon.LST.SORT_ASC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
-                return CompareRowValues(tableFrame, rowa, rowb, sortby, function(row)
-                    return row.run.duration or 0
+                return CompareRowValues(tableFrame, rowa, rowb, sortby, function(a, b)
+                    local aDuration = a.run.duration
+                    local bDuration = b.run.duration
+                    return aDuration < bDuration or
+                        (aDuration == bDuration and (a.run.startTimestamp > b.run.startTimestamp or
+                            (a.run.startTimestamp == b.run.startTimestamp and rowa > rowb)))
                 end)
             end
         },
@@ -302,8 +306,11 @@ local function BuildColumns()
             index = MEDAL_COLUMN_INDEX,
             defaultsort = addon.LST.SORT_ASC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
-                return CompareRowValues(tableFrame, rowa, rowb, sortby, function(row)
-                    return row.run.medalIndex or addon.Dungeons.INCOMPLETE_MEDAL_INDEX
+                return CompareRowValues(tableFrame, rowa, rowb, sortby, function(a, b)
+                    local aMedal = a.run.medalIndex or addon.Dungeons.INCOMPLETE_MEDAL_INDEX
+                    local bMedal = b.run.medalIndex or addon.Dungeons.INCOMPLETE_MEDAL_INDEX
+                    return aMedal < bMedal or (aMedal == bMedal and (a.run.startTimestamp > b.run.startTimestamp or
+                        (a.run.startTimestamp == b.run.startTimestamp and rowa > rowb)))
                 end)
             end
         },
@@ -314,9 +321,11 @@ local function BuildColumns()
             index = RUNNER_COLUMN_INDEX,
             defaultsort = addon.LST.SORT_ASC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
-                return CompareRowValues(tableFrame, rowa, rowb, sortby, function(row)
-                    local runnerName = row.run.runner and row.run.runner.name or ""
-                    return string.lower(RemoveColorCode(runnerName))
+                return CompareRowValues(tableFrame, rowa, rowb, sortby, function(a, b)
+                    local aRunner = a.run.runners[1].name
+                    local bRunner = b.run.runners[1].name
+                    return aRunner < bRunner or (aRunner == bRunner and (a.run.startTimestamp > b.run.startTimestamp or
+                        (a.run.startTimestamp == b.run.startTimestamp and rowa > rowb)))
                 end)
             end
         }
