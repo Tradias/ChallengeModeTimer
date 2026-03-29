@@ -12,6 +12,8 @@ libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
 libs\LibSharedMedia-3.0\lib.xml
 libs\LibScrollingTable-1.0\lib-st.xml
+libs\LibSerialize-1.2\lib.xml
+libs\LibDeflate-1.0\lib.xml
 
 Constants.lua
 Dungeons.lua
@@ -19,7 +21,9 @@ Utility.lua
 SplitProfile.lua
 RunUI.lua
 Run.lua
+ImportExport.lua
 OptionsUI.lua
+ImportExportUI.lua
 RunHistoryUI.lua
 RunHistory.lua
 AppearanceUI.lua

@@ -85,6 +85,12 @@ function addon.RunHistory:GetHistoricalRuns(instanceId)
     return runs, #runs - 2
 end
 
+function addon.RunHistory:AddRun(instanceId, run)
+    local runs = GetRunHistory(instanceId).runs
+    table.insert(runs, 1, run)
+    return 1
+end
+
 function addon.RunHistory:GetComparisonRun(instanceId)
     local runHistory = GetRunHistory(instanceId)
     local index = runHistory.comparisonRunIndex

@@ -53,7 +53,11 @@ local function BuildRunnerNameText(run)
     local player = run.runners[1]
     local classColor = addon.Utility:GetClassColorById(player.classId)
     local colorStr = string.format("ff%02x%02x%02x", classColor.r * 255, classColor.g * 255, classColor.b * 255)
-    return string.format("|c%s%s|r", colorStr, player.name)
+    local importStr = ""
+    if run.importTimestamp then
+        importStr = "*"
+    end
+    return string.format("|c%s%s%s|r", colorStr, player.name, importStr)
 end
 
 local function RemoveColorCode(text)
@@ -116,6 +120,10 @@ local function ShowRunnersTooltip(frame, run)
 
     AddRunnerLinesToTooltip(run)
 
+    if run.importTimestamp then
+        GameTooltip:AddLine("\n*Imported run", 1, 1, 1)
+    end
+
     GameTooltip:Show()
 end
 
@@ -164,15 +172,17 @@ local function FindBestFilteredRun(table)
     for _, realrow in ipairs(table.filtered) do
         local rowData = table:GetRow(realrow)
         local run = rowData.run
-        local duration = run.duration
-        local completedSplitCount = CountCompletedSplits(run)
-        if completedSplitCount > bestCompletedSplitCount then
-            bestDuration = duration
-            bestCompletedSplitCount = completedSplitCount
-            index = realrow
-        elseif completedSplitCount == bestCompletedSplitCount and (bestDuration == nil or duration < bestDuration) then
-            bestDuration = duration
-            index = realrow
+        if not run.importTimestamp then
+            local duration = run.duration
+            local completedSplitCount = CountCompletedSplits(run)
+            if completedSplitCount > bestCompletedSplitCount then
+                bestDuration = duration
+                bestCompletedSplitCount = completedSplitCount
+                index = realrow
+            elseif completedSplitCount == bestCompletedSplitCount and (bestDuration == nil or duration < bestDuration) then
+                bestDuration = duration
+                index = realrow
+            end
         end
     end
     return index
@@ -185,20 +195,12 @@ local function ShowBestRunTooltip(frame, table, instanceId)
     end
     local rowData = table:GetRow(bestIndex)
     local run = rowData.run
-    GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
-    local header = addon.Utility:FormatTime(run.duration, 3)
-    if run.medalIndex then
-        local medalLabel = addon.Dungeons:GetMedalLabelByIndex(run.medalIndex)
-        header = string.format("%s %s", header, medalLabel)
-    end
-    GameTooltip:SetText(header, 1, 0.82, 0)
-    GameTooltip:AddLine(FormatRunDate(run.startTimestamp), 1, 1, 1)
-    GameTooltip:AddLine(" ")
-    GameTooltip:AddLine("Splits", 1, 0.82, 0)
-    AddSplitLinesToTooltip(instanceId, run)
-    GameTooltip:AddLine(" ")
-    GameTooltip:AddLine("Runners", 1, 0.82, 0)
-    AddRunnerLinesToTooltip(run)
+    addon.RunHistoryUI:ShowRunTooltip(frame, instanceId, run)
+end
+
+local function ShowExportTooltip(frame)
+    GameTooltip:SetOwner(frame, "ANCHOR_BOTTOMRIGHT")
+    GameTooltip:SetText("Click on a run to export first", 1, 1, 1)
     GameTooltip:Show()
 end
 
@@ -395,7 +397,7 @@ function addon.RunHistoryUI:Init()
         end
         self.filterText = filterBox:GetText()
         self.table:SortData()
-        self:UpdateComparisonHint()
+        self:UpdateComparisonHintAndExportButton()
     end)
     filterBox:SetScript("OnEditFocusGained", function()
         if isPlaceholder then
@@ -426,7 +428,56 @@ function addon.RunHistoryUI:Init()
         GameTooltip:Hide()
     end)
 
+    -- Bottom bar
+    local bottomBarFrame = CreateFrame("Frame", nil, runsFrame)
+    bottomBarFrame:SetPoint("BOTTOMLEFT", self.runsFrame, "BOTTOMLEFT", 0, 0)
+    bottomBarFrame:SetPoint("BOTTOMRIGHT", self.runsFrame, "BOTTOMRIGHT", 0, 0)
+    bottomBarFrame:SetHeight(25)
+    self.bottomBarFrame = bottomBarFrame
+
+    -- Table
     self.table = self:CreateTable()
+    self.table.frame:SetPoint("TOPLEFT", self.dropdown, "BOTTOMLEFT", -10, -30)
+    self.table.frame:SetPoint("BOTTOMRIGHT", bottomBarFrame, "TOPRIGHT", 0, 0)
+
+    -- Bottom bar buttons
+    local importButton = CreateFrame("Button", nil, bottomBarFrame, "UIPanelButtonTemplate")
+    importButton:SetPoint("LEFT", bottomBarFrame, "LEFT", 10, 2)
+    importButton:SetSize(bestRunButton:GetWidth(), bestRunButton:GetHeight())
+    importButton:SetText("Import")
+    importButton:SetScript("OnClick", function()
+        addon.ImportExportUI:ToggleImport()
+    end)
+
+    local exportButton = CreateFrame("Button", nil, bottomBarFrame, "UIPanelButtonTemplate")
+    exportButton:SetPoint("LEFT", importButton, "RIGHT", 10, 0)
+    exportButton:SetSize(importButton:GetWidth(), importButton:GetHeight())
+    exportButton:SetText("Export")
+    exportButton:SetScript("OnClick", function()
+        local run = addon.RunHistory:GetComparisonRun(self.selectedInstanceId)
+        if run then
+            addon.ImportExportUI:ToggleExport(self.selectedInstanceId, run)
+        else
+            addon.ImportExportUI:ToggleExport()
+        end
+    end)
+    self.exportButton = exportButton
+    
+    local exportTooltipFrame = CreateFrame("Frame", nil, exportButton)
+    exportTooltipFrame:SetPoint("TOPLEFT", exportButton, "TOPLEFT", 0, 0)
+    exportTooltipFrame:SetPoint("BOTTOMRIGHT", exportButton, "BOTTOMRIGHT", 0, 0)
+    exportTooltipFrame:SetPropagateMouseClicks(true)
+    exportTooltipFrame:SetPropagateMouseMotion(true)
+    exportTooltipFrame:SetScript("OnEnter", function()
+        if not exportButton:IsEnabled() then
+            ShowExportTooltip(exportButton)
+        end
+    end)
+    exportTooltipFrame:SetScript("OnLeave", function()
+        if not exportButton:IsEnabled() then
+            GameTooltip:Hide()
+        end
+    end)
 
     runsFrame:HookScript("OnShow", function()
         self:SetSelectedInstance(self.selectedInstanceId)
@@ -438,8 +489,6 @@ function addon.RunHistoryUI:CreateTable()
 
     local rowHeight = 20
     local tableFrame = addon.LST:CreateST(columns, 10, rowHeight, nil, self.runsFrame, false)
-    tableFrame.frame:SetPoint("TOPLEFT", self.dropdown, "BOTTOMLEFT", -10, -30)
-    tableFrame.frame:SetPoint("BOTTOMRIGHT", self.runsFrame, "BOTTOMRIGHT", 0, 0)
 
     local comparisonHint = tableFrame.frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     comparisonHint:SetPoint("BOTTOM", tableFrame.frame, "BOTTOM", 0, 8)
@@ -492,8 +541,8 @@ function addon.RunHistoryUI:CreateTable()
                     return true
                 end
                 UpdateComparisonRunIndex(table, self.selectedInstanceId, realrow)
-                local isAlreadySelected = (table:GetSelection() == realrow)
-                self:UpdateComparisonHint(not isAlreadySelected)
+                self:SyncSelectionAndComparisonRun()
+                return true
             end
             return false
         end,
@@ -551,7 +600,7 @@ function addon.RunHistoryUI:SyncSelectionAndComparisonRun()
     else
         self.table:ClearSelection()
     end
-    self:UpdateComparisonHint()
+    self:UpdateComparisonHintAndExportButton()
 end
 
 function addon.RunHistoryUI:Refresh()
@@ -570,10 +619,10 @@ function addon.RunHistoryUI:SelectBestFilteredRun()
         self.table:SetSelection(index)
         addon.RunHistory:SetComparisonRunIndex(self.selectedInstanceId, index)
     end
-    self:UpdateComparisonHint()
+    self:UpdateComparisonHintAndExportButton()
 end
 
-function addon.RunHistoryUI:UpdateComparisonHint(hasSelection)
+function addon.RunHistoryUI:UpdateComparisonHintAndExportButton(hasSelection)
     if hasSelection == nil then
         hasSelection = self.table:GetSelection()
     end
@@ -581,6 +630,11 @@ function addon.RunHistoryUI:UpdateComparisonHint(hasSelection)
         self.comparisonHint:Hide()
     else
         self.comparisonHint:Show()
+    end
+    if hasSelection then
+        self.exportButton:Enable()
+    else
+        self.exportButton:Disable()
     end
 end
 
@@ -591,4 +645,25 @@ function addon.RunHistoryUI:SetSelectedInstance(instanceId)
     end
     self.selectedInstanceId = instanceId
     self:Refresh()
+end
+
+function addon.RunHistoryUI:ShowRunTooltip(frame, instanceId, run, anchor)
+    if not anchor then
+        anchor = "ANCHOR_RIGHT"
+    end
+    GameTooltip:SetOwner(frame, anchor)
+    local header = addon.Utility:FormatTime(run.duration, 3)
+    if run.medalIndex then
+        local medalLabel = addon.Dungeons:GetMedalLabelByIndex(run.medalIndex)
+        header = string.format("%s %s", header, medalLabel)
+    end
+    GameTooltip:SetText(header, 1, 0.82, 0)
+    GameTooltip:AddLine(FormatRunDate(run.startTimestamp), 1, 1, 1)
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("Splits", 1, 0.82, 0)
+    AddSplitLinesToTooltip(instanceId, run)
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("Runners", 1, 0.82, 0)
+    AddRunnerLinesToTooltip(run)
+    GameTooltip:Show()
 end
