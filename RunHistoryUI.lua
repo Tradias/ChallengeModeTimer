@@ -481,6 +481,10 @@ function addon.RunHistoryUI:CreateTable()
 
     tableFrame:RegisterEvents({
         OnClick = function(rowFrame, cellFrame, data, cols, row, realrow, column, table, button)
+            if button == "RightButton" then
+                addon.OptionsUI:Hide()
+                return true
+            end
             if button == "LeftButton" and realrow then
                 if IsShiftKeyDown() then
                     local rowData = table:GetRow(realrow)
