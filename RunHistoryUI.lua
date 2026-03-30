@@ -343,6 +343,148 @@ local function BuildRowValues(run)
     }
 end
 
+local function BuildRows(instanceId)
+    local runs, runCount = addon.RunHistory:GetHistoricalRuns(instanceId)
+    local rows = {}
+    if runCount > 0 then
+        for index, run in ipairs(runs) do
+            rows[index] = {
+                run = run,
+                cols = BuildRowValues(run)
+            }
+            if index == runCount then
+                break
+            end
+        end
+    end
+    return rows
+end
+
+local function UpdateComparisonHintAndExportButton(self, hasSelection)
+    if hasSelection == nil then
+        hasSelection = self.table:GetSelection()
+    end
+    if hasSelection or #self.table.filtered == 0 or #self.table.filtered >= self.table.displayRows then
+        self.comparisonHint:Hide()
+    else
+        self.comparisonHint:Show()
+    end
+    if hasSelection then
+        self.exportButton:Enable()
+    else
+        self.exportButton:Disable()
+    end
+end
+
+local function SyncSelectionAndComparisonRun(self)
+    local comparisonRunIndex = addon.RunHistory:GetComparisonRunIndex(self.selectedInstanceId)
+    if comparisonRunIndex then
+        self.table:SetSelection(comparisonRunIndex)
+    else
+        self.table:ClearSelection()
+    end
+    UpdateComparisonHintAndExportButton(self)
+end
+
+local function SelectBestFilteredRun(self)
+    local index = FindBestFilteredRun(self.table)
+    if index then
+        self.table:SetSelection(index)
+        addon.RunHistory:SetComparisonRunIndex(self.selectedInstanceId, index)
+    end
+    UpdateComparisonHintAndExportButton(self)
+end
+
+local function CreateTable(self)
+    local rowHeight = 20
+    local tableFrame = addon.LST:CreateST(BuildColumns(), 10, rowHeight, nil, self.runsFrame, false)
+
+    local comparisonHint = tableFrame.frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    comparisonHint:SetPoint("BOTTOM", tableFrame.frame, "BOTTOM", 0, 8)
+    comparisonHint:SetText("↑ click on a run to compare against ↑")
+    comparisonHint:SetTextColor(0.7, 0.7, 0.7)
+    SetFont(comparisonHint, 11)
+    comparisonHint:Hide()
+    self.comparisonHint = comparisonHint
+
+    local function SetTableFonts()
+        for _, col in ipairs(tableFrame.head.cols) do
+            SetFont(col:GetFontString(), 13)
+        end
+        for _, row in ipairs(tableFrame.rows) do
+            for _, col in ipairs(row.cols) do
+                SetFont(col.text, 12)
+            end
+        end
+    end
+
+    local function UpdateDisplayRows()
+        local frameHeight = tableFrame.frame:GetHeight()
+        if not frameHeight or frameHeight <= 0 then
+            return
+        end
+        local displayRows = math.max(1, math.floor((frameHeight - 10) / rowHeight))
+        if displayRows ~= tableFrame.displayRows then
+            tableFrame:SetDisplayRows(displayRows, rowHeight)
+            SetTableFonts()
+        end
+    end
+
+    tableFrame.frame:SetScript("OnSizeChanged", UpdateDisplayRows)
+    self.runsFrame:HookScript("OnSizeChanged", UpdateDisplayRows)
+    UpdateDisplayRows()
+
+    tableFrame:EnableSelection(true)
+    tableFrame:SetDefaultHighlight(0.2, 0.6, 1, 0.25)
+
+    tableFrame:RegisterEvents({
+        OnClick = function(rowFrame, cellFrame, data, cols, row, realrow, column, table, button)
+            if button == "RightButton" then
+                addon.OptionsUI:Hide()
+                return true
+            end
+            if button == "LeftButton" and realrow then
+                if IsShiftKeyDown() then
+                    local rowData = table:GetRow(realrow)
+                    SendRunToChat(self.selectedInstanceId, rowData.run)
+                    return true
+                end
+                UpdateComparisonRunIndex(table, self.selectedInstanceId, realrow)
+                SyncSelectionAndComparisonRun(self)
+                return true
+            end
+            return false
+        end,
+        OnEnter = function(rowFrame, cellFrame, data, cols, row, realrow, column, table)
+            if not realrow then
+                if column and column == MEDAL_COLUMN_INDEX then
+                    ShowMedalsTooltip(cellFrame, self.selectedInstanceId)
+                end
+                return false
+            end
+            local rowData = table:GetRow(realrow)
+            if column == RUNNER_COLUMN_INDEX then
+                ShowRunnersTooltip(cellFrame, rowData.run)
+            elseif column == MEDAL_COLUMN_INDEX then
+                ShowMedalsTooltip(cellFrame, self.selectedInstanceId)
+            else
+                ShowRunSplitsTooltip(cellFrame, self.selectedInstanceId, rowData.run)
+            end
+            return false
+        end,
+        OnLeave = function()
+            GameTooltip:Hide()
+            return false
+        end
+    }, true)
+
+    tableFrame:SetFilter(function(_, rowData)
+        return FilterRow(self.filterText, rowData)
+    end)
+
+    return tableFrame
+end
+
 function addon.RunHistoryUI:Init()
     local runsFrame = addon.OptionsUI:GetRunsFrame()
     self.runsFrame = runsFrame
@@ -397,7 +539,7 @@ function addon.RunHistoryUI:Init()
         end
         self.filterText = filterBox:GetText()
         self.table:SortData()
-        self:UpdateComparisonHintAndExportButton()
+        UpdateComparisonHintAndExportButton(self)
     end)
     filterBox:SetScript("OnEditFocusGained", function()
         if isPlaceholder then
@@ -419,7 +561,7 @@ function addon.RunHistoryUI:Init()
     bestRunButton:SetPoint("LEFT", filterBox, "RIGHT", 20, -1)
     bestRunButton:SetText("Best Run")
     bestRunButton:SetScript("OnClick", function()
-        self:SelectBestFilteredRun()
+        SelectBestFilteredRun(self)
     end)
     bestRunButton:SetScript("OnEnter", function()
         ShowBestRunTooltip(bestRunButton, self.table, self.selectedInstanceId)
@@ -436,7 +578,7 @@ function addon.RunHistoryUI:Init()
     self.bottomBarFrame = bottomBarFrame
 
     -- Table
-    self.table = self:CreateTable()
+    self.table = CreateTable(self)
     self.table.frame:SetPoint("TOPLEFT", self.dropdown, "BOTTOMLEFT", -10, -30)
     self.table.frame:SetPoint("BOTTOMRIGHT", bottomBarFrame, "TOPRIGHT", 0, 0)
 
@@ -462,7 +604,7 @@ function addon.RunHistoryUI:Init()
         end
     end)
     self.exportButton = exportButton
-    
+
     local exportTooltipFrame = CreateFrame("Frame", nil, exportButton)
     exportTooltipFrame:SetPoint("TOPLEFT", exportButton, "TOPLEFT", 0, 0)
     exportTooltipFrame:SetPoint("BOTTOMRIGHT", exportButton, "BOTTOMRIGHT", 0, 0)
@@ -484,158 +626,14 @@ function addon.RunHistoryUI:Init()
     end)
 end
 
-function addon.RunHistoryUI:CreateTable()
-    local columns = BuildColumns()
-
-    local rowHeight = 20
-    local tableFrame = addon.LST:CreateST(columns, 10, rowHeight, nil, self.runsFrame, false)
-
-    local comparisonHint = tableFrame.frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    comparisonHint:SetPoint("BOTTOM", tableFrame.frame, "BOTTOM", 0, 8)
-    comparisonHint:SetText("↑ click on a run to compare against ↑")
-    comparisonHint:SetTextColor(0.7, 0.7, 0.7)
-    SetFont(comparisonHint, 11)
-    comparisonHint:Hide()
-    self.comparisonHint = comparisonHint
-
-    local function SetTableFonts()
-        for _, col in ipairs(tableFrame.head.cols) do
-            SetFont(col:GetFontString(), 13)
-        end
-        for _, row in ipairs(tableFrame.rows) do
-            for _, col in ipairs(row.cols) do
-                SetFont(col.text, 12)
-            end
-        end
-    end
-
-    local function UpdateDisplayRows()
-        local frameHeight = tableFrame.frame:GetHeight()
-        if not frameHeight or frameHeight <= 0 then
-            return
-        end
-        local displayRows = math.max(1, math.floor((frameHeight - 10) / rowHeight))
-        if displayRows ~= tableFrame.displayRows then
-            tableFrame:SetDisplayRows(displayRows, rowHeight)
-            SetTableFonts()
-        end
-    end
-
-    tableFrame.frame:SetScript("OnSizeChanged", UpdateDisplayRows)
-    self.runsFrame:HookScript("OnSizeChanged", UpdateDisplayRows)
-    UpdateDisplayRows()
-
-    tableFrame:EnableSelection(true)
-    tableFrame:SetDefaultHighlight(0.2, 0.6, 1, 0.25)
-
-    tableFrame:RegisterEvents({
-        OnClick = function(rowFrame, cellFrame, data, cols, row, realrow, column, table, button)
-            if button == "RightButton" then
-                addon.OptionsUI:Hide()
-                return true
-            end
-            if button == "LeftButton" and realrow then
-                if IsShiftKeyDown() then
-                    local rowData = table:GetRow(realrow)
-                    SendRunToChat(self.selectedInstanceId, rowData.run)
-                    return true
-                end
-                UpdateComparisonRunIndex(table, self.selectedInstanceId, realrow)
-                self:SyncSelectionAndComparisonRun()
-                return true
-            end
-            return false
-        end,
-        OnEnter = function(rowFrame, cellFrame, data, cols, row, realrow, column, table)
-            if not realrow then
-                if column and column == MEDAL_COLUMN_INDEX then
-                    ShowMedalsTooltip(cellFrame, self.selectedInstanceId)
-                end
-                return false
-            end
-            local rowData = table:GetRow(realrow)
-            if column == RUNNER_COLUMN_INDEX then
-                ShowRunnersTooltip(cellFrame, rowData.run)
-            elseif column == MEDAL_COLUMN_INDEX then
-                ShowMedalsTooltip(cellFrame, self.selectedInstanceId)
-            else
-                ShowRunSplitsTooltip(cellFrame, self.selectedInstanceId, rowData.run)
-            end
-            return false
-        end,
-        OnLeave = function()
-            GameTooltip:Hide()
-            return false
-        end
-    }, true)
-
-    tableFrame:SetFilter(function(_, rowData)
-        return FilterRow(self.filterText, rowData)
-    end)
-
-    return tableFrame
-end
-
-function addon.RunHistoryUI:BuildRows(instanceId)
-    local runs, runCount = addon.RunHistory:GetHistoricalRuns(instanceId)
-    local rows = {}
-    if runCount > 0 then
-        for index, run in ipairs(runs) do
-            rows[index] = {
-                run = run,
-                cols = BuildRowValues(run)
-            }
-            if index == runCount then
-                break
-            end
-        end
-    end
-    return rows
-end
-
-function addon.RunHistoryUI:SyncSelectionAndComparisonRun()
-    local comparisonRunIndex = addon.RunHistory:GetComparisonRunIndex(self.selectedInstanceId)
-    if comparisonRunIndex then
-        self.table:SetSelection(comparisonRunIndex)
-    else
-        self.table:ClearSelection()
-    end
-    self:UpdateComparisonHintAndExportButton()
-end
-
 function addon.RunHistoryUI:Refresh()
     if not self.table or not self.runsFrame or not self.runsFrame:IsShown() then
         return
     end
 
-    local rows = self:BuildRows(self.selectedInstanceId)
+    local rows = BuildRows(self.selectedInstanceId)
     self.table:SetData(rows)
-    self:SyncSelectionAndComparisonRun()
-end
-
-function addon.RunHistoryUI:SelectBestFilteredRun()
-    local index = FindBestFilteredRun(self.table)
-    if index then
-        self.table:SetSelection(index)
-        addon.RunHistory:SetComparisonRunIndex(self.selectedInstanceId, index)
-    end
-    self:UpdateComparisonHintAndExportButton()
-end
-
-function addon.RunHistoryUI:UpdateComparisonHintAndExportButton(hasSelection)
-    if hasSelection == nil then
-        hasSelection = self.table:GetSelection()
-    end
-    if hasSelection or #self.table.filtered == 0 or #self.table.filtered >= self.table.displayRows then
-        self.comparisonHint:Hide()
-    else
-        self.comparisonHint:Show()
-    end
-    if hasSelection then
-        self.exportButton:Enable()
-    else
-        self.exportButton:Disable()
-    end
+    SyncSelectionAndComparisonRun(self)
 end
 
 function addon.RunHistoryUI:SetSelectedInstance(instanceId)
