@@ -2,7 +2,7 @@
 ## Title: Challenge Mode Timer
 ## Notes: Challenge Mode timer with splits and run history
 ## Author: Tradias
-## Version: 1.0.10
+## Version: 1.0.11
 ## SavedVariables: ChallengeModeTimerDB
 
 ## X-Website: https://github.com/Tradias/ChallengeModeTimer
