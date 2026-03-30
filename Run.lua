@@ -175,6 +175,10 @@ local function HasOnlyOneIncompleteSplit(run)
     return count == 1
 end
 
+local function UpdateSplitDuration(run, split, criteriaInfo)
+    split.duration = RoundDuration(GetTime() - run.state.startTime - criteriaInfo.elapsed)
+end
+
 local function UpdateSplit(run, split, splitDefinition)
     local isUpdated = false
     local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(splitDefinition.criteriaIndex)
@@ -205,15 +209,11 @@ local function UpdateSplit(run, split, splitDefinition)
         if HasOnlyOneIncompleteSplit(run) then
             return isUpdated
         end
+        split.completed = true
+        isUpdated = true
         if run.state.isStartTimeAccurate then
-            isUpdated = true
-            split.completed = true
-            split.duration = RoundDuration(GetTime() - run.state.startTime - criteriaInfo.elapsed)
-        elseif splitDefinition.criteriaIndex == 20673 then
-            -- Lorewalker Stonestep `criteriaInfo.elapsed` is always 0
-            isUpdated = true
-            split.completed = true
-        else
+            UpdateSplitDuration(run, split, criteriaInfo)
+        elseif splitDefinition.criteriaId ~= 20673 then -- Lorewalker Stonestep `criteriaInfo.elapsed` is always 0
             AddPendingSplitUpdate(run, splitDefinition.criteriaIndex)
         end
     end
@@ -221,14 +221,14 @@ local function UpdateSplit(run, split, splitDefinition)
 end
 
 local function UpdatePendingSplits(run)
-    local isUpdated = false
-    local splitProfile = addon.SplitProfile:Get(run.state.instanceId)
     local pendingSplitUpdateIndices = run.state.pendingSplitUpdateIndices
+    local needsUIUpdate = #pendingSplitUpdateIndices > 0
     run.state.pendingSplitUpdateIndices = {}
     for _, splitUpdateIndex in ipairs(pendingSplitUpdateIndices) do
-        isUpdated = UpdateSplit(run, run.splits[splitUpdateIndex], splitProfile.splits[splitUpdateIndex]) or isUpdated
+        local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(splitUpdateIndex)
+        UpdateSplitDuration(run, run.splits[splitUpdateIndex], criteriaInfo)
     end
-    if isUpdated then
+    if needsUIUpdate then
         addon.RunUI:UpdateSplits()
     end
 end
