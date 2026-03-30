@@ -109,6 +109,24 @@ function addon.RunHistory:SetComparisonRunIndex(instanceId, index)
     addon.RunUI:UpdateSplits()
 end
 
+function addon.RunHistory:DeleteRun(instanceId, index)
+    local runHistory = GetRunHistory(instanceId)
+    local runs = runHistory.runs
+    if runs[index].state then
+        runs[index] = addon.Run:CreateRun(instanceId)
+        return
+    end
+    local comparisonRunIndex = runHistory.comparisonRunIndex
+    if comparisonRunIndex then
+        if comparisonRunIndex == index then
+            runHistory.comparisonRunIndex = nil
+        elseif comparisonRunIndex > index then
+            runHistory.comparisonRunIndex = comparisonRunIndex - 1
+        end
+    end
+    table.remove(runs, index)
+end
+
 function addon.RunHistory:InsertSampleRuns()
     for instanceId, dungeon in pairs(addon.Dungeons:Get()) do
         local baseTime = dungeon.medals[3] -- gold

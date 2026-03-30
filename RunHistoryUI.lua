@@ -4,6 +4,8 @@ addon.RunHistoryUI = addon.RunHistoryUI or {}
 
 local MEDAL_COLUMN_INDEX = 3
 local RUNNER_COLUMN_INDEX = 4
+local COMPARISON_RUN_SELECTION_HIGHTLIGHT = { 0.2, 0.6, 1, 0.25 }
+local DELETE_MODE_HIGHTLIGHT = { 1, 0.2, 0.2, 0.25 }
 
 local function SetFont(fontString, desiredSize)
     local _, size, flags = fontString:GetFont()
@@ -360,6 +362,10 @@ local function BuildRows(instanceId)
     return rows
 end
 
+local function UpdateTableData(self)
+    self.table:SetData(BuildRows(self.selectedInstanceId))
+end
+
 local function UpdateComparisonHintAndExportButton(self, hasSelection)
     if hasSelection == nil then
         hasSelection = self.table:GetSelection()
@@ -393,6 +399,22 @@ local function SelectBestFilteredRun(self)
         addon.RunHistory:SetComparisonRunIndex(self.selectedInstanceId, index)
     end
     UpdateComparisonHintAndExportButton(self)
+end
+
+local function EnableDeleteMode(self, isEnabled)
+    if self.deleteModeActive == isEnabled then
+        return
+    end
+
+    self.deleteModeActive = isEnabled
+    if isEnabled then
+        self.table:SetDefaultHighlight(unpack(DELETE_MODE_HIGHTLIGHT))
+        self.table:ClearSelection()
+        self.comparisonHint:Hide()
+    else
+        self.table:SetDefaultHighlight(unpack(COMPARISON_RUN_SELECTION_HIGHTLIGHT))
+        SyncSelectionAndComparisonRun(self)
+    end
 end
 
 local function CreateTable(self)
@@ -435,7 +457,7 @@ local function CreateTable(self)
     UpdateDisplayRows()
 
     tableFrame:EnableSelection(true)
-    tableFrame:SetDefaultHighlight(0.2, 0.6, 1, 0.25)
+    tableFrame:SetDefaultHighlight(unpack(COMPARISON_RUN_SELECTION_HIGHTLIGHT))
 
     tableFrame:RegisterEvents({
         OnClick = function(rowFrame, cellFrame, data, cols, row, realrow, column, table, button)
@@ -447,10 +469,13 @@ local function CreateTable(self)
                 if IsShiftKeyDown() then
                     local rowData = table:GetRow(realrow)
                     SendRunToChat(self.selectedInstanceId, rowData.run)
-                    return true
+                elseif self.deleteModeActive then
+                    addon.RunHistory:DeleteRun(self.selectedInstanceId, realrow)
+                    UpdateTableData(self)
+                else
+                    UpdateComparisonRunIndex(table, self.selectedInstanceId, realrow)
+                    SyncSelectionAndComparisonRun(self)
                 end
-                UpdateComparisonRunIndex(table, self.selectedInstanceId, realrow)
-                SyncSelectionAndComparisonRun(self)
                 return true
             end
             return false
@@ -583,15 +608,19 @@ function addon.RunHistoryUI:Init()
     self.table.frame:SetPoint("BOTTOMRIGHT", bottomBarFrame, "TOPRIGHT", 0, 0)
 
     -- Bottom bar buttons
-    local importButton = CreateFrame("Button", nil, bottomBarFrame, "UIPanelButtonTemplate")
-    importButton:SetPoint("LEFT", bottomBarFrame, "LEFT", 10, 2)
+    local bottomBarButtonFrame = CreateFrame("Frame", nil, bottomBarFrame)
+    bottomBarButtonFrame:SetPoint("TOPLEFT", bottomBarFrame, "TOPLEFT", 0, 0)
+    bottomBarButtonFrame:SetPoint("BOTTOMRIGHT", bottomBarFrame, "BOTTOMRIGHT", 0, 0)
+
+    local importButton = CreateFrame("Button", nil, bottomBarButtonFrame, "UIPanelButtonTemplate")
+    importButton:SetPoint("LEFT", bottomBarButtonFrame, "LEFT", 10, 2)
     importButton:SetSize(bestRunButton:GetWidth(), bestRunButton:GetHeight())
     importButton:SetText("Import")
     importButton:SetScript("OnClick", function()
         addon.ImportExportUI:ToggleImport()
     end)
 
-    local exportButton = CreateFrame("Button", nil, bottomBarFrame, "UIPanelButtonTemplate")
+    local exportButton = CreateFrame("Button", nil, bottomBarButtonFrame, "UIPanelButtonTemplate")
     exportButton:SetPoint("LEFT", importButton, "RIGHT", 10, 0)
     exportButton:SetSize(importButton:GetWidth(), importButton:GetHeight())
     exportButton:SetText("Export")
@@ -621,8 +650,49 @@ function addon.RunHistoryUI:Init()
         end
     end)
 
+    local deleteModeButton = CreateFrame("Button", nil, bottomBarButtonFrame, "UIPanelButtonTemplate")
+    deleteModeButton:SetPoint("RIGHT", bottomBarButtonFrame, "RIGHT", -10, 2)
+    deleteModeButton:SetSize(100, bestRunButton:GetHeight())
+    deleteModeButton:SetText("Delete Mode")
+
+    -- Bottom bar delete mode
+    self.deleteModeActive = false
+
+    local bottomBarDeleteModeFrame = CreateFrame("Frame", nil, bottomBarFrame)
+    bottomBarDeleteModeFrame:SetPoint("TOPLEFT", bottomBarFrame, "TOPLEFT", 0, 0)
+    bottomBarDeleteModeFrame:SetPoint("BOTTOMRIGHT", bottomBarFrame, "BOTTOMRIGHT", 0, 0)
+    bottomBarDeleteModeFrame:SetScript("OnShow", function()
+        bottomBarButtonFrame:Hide()
+    end)
+    bottomBarDeleteModeFrame:SetScript("OnHide", function()
+        EnableDeleteMode(self, false)
+        bottomBarButtonFrame:Show()
+    end)
+    bottomBarDeleteModeFrame:Hide()
+
+    deleteModeButton:SetScript("OnClick", function()
+        bottomBarDeleteModeFrame:Show()
+        EnableDeleteMode(self, true)
+    end)
+
+    local deleteModeText = bottomBarDeleteModeFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    deleteModeText:SetPoint("LEFT", bottomBarDeleteModeFrame, "LEFT", 10, 2)
+    deleteModeText:SetText("Click on a run to delete")
+    deleteModeText:SetTextColor(unpack(DELETE_MODE_HIGHTLIGHT))
+    deleteModeText:SetAlpha(1)
+    SetFont(deleteModeText, 12)
+
+    local deleteModeDoneButton = CreateFrame("Button", nil, bottomBarDeleteModeFrame, "UIPanelButtonTemplate")
+    deleteModeDoneButton:SetPoint("RIGHT", bottomBarButtonFrame, "RIGHT", -10, 2)
+    deleteModeDoneButton:SetSize(100, bestRunButton:GetHeight())
+    deleteModeDoneButton:SetText("Done")
+    deleteModeDoneButton:SetScript("OnClick", function()
+        bottomBarDeleteModeFrame:Hide()
+    end)
+
     runsFrame:HookScript("OnShow", function()
         self:SetSelectedInstance(self.selectedInstanceId)
+        bottomBarDeleteModeFrame:Hide()
     end)
 end
 
@@ -631,8 +701,7 @@ function addon.RunHistoryUI:Refresh()
         return
     end
 
-    local rows = BuildRows(self.selectedInstanceId)
-    self.table:SetData(rows)
+    UpdateTableData(self)
     SyncSelectionAndComparisonRun(self)
 end
 
