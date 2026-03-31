@@ -243,6 +243,12 @@ local function SendRunToChat(instanceId, run)
         local splitDurationText = BuildSplitDurationText(split)
         SendMessageInCurrentChannel(editBox, string.format("%s - %s", label, splitDurationText))
     end
+
+    local runnersText = "Runners: " .. run.runners[1].name
+    for i = 2, #run.runners do
+        runnersText = runnersText .. ", " .. run.runners[i].name
+    end
+    SendMessageInCurrentChannel(editBox, runnersText)
 end
 
 local function UpdateComparisonRunIndex(table, instanceId, index)
