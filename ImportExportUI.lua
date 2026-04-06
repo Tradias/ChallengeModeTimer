@@ -4,41 +4,15 @@ addon.ImportExportUI = addon.ImportExportUI or {}
 
 local RUN_TOOLTIP_ANCHOR = "ANCHOR_TOP"
 
-local function CreateBaseFrame(name)
-    local optionsFrame = addon.OptionsUI:Get()
-    local runsFrame = addon.OptionsUI:GetRunsFrame()
-
-    local frame = CreateFrame("Frame", name, runsFrame, "BackdropTemplate")
-    frame:SetSize(350, 223)
-    frame:SetPoint("CENTER", runsFrame, "CENTER")
-    frame:SetFrameStrata(runsFrame:GetFrameStrata())
-    frame:SetFrameLevel(runsFrame:GetFrameLevel() + 50)
-    frame:SetBackdrop(optionsFrame:GetBackdrop())
-    frame:SetBackdropColor(0.1, 0.1, 0.1, 1)
-    frame:SetBackdropBorderColor(optionsFrame:GetBackdropBorderColor())
-    frame:EnableMouse(true)
-    frame:SetScript("OnMouseDown", function(_, button)
-        if button == "RightButton" then
-            frame:Hide()
-            return
-        end
-    end)
-    frame:SetScript("OnHide", function()
-        GameTooltip:Hide()
-    end)
-    frame:Hide()
-    return frame
-end
-
-local function CreateImportExportContent(frame)
-    local hint = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    hint:SetPoint("TOP", frame, "TOP", 0, -20)
+local function CreateImportExportContent(frame, actionButton)
+    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    title:SetPoint("TOP", frame, "TOP", 0, -20)
 
     local scrollFrame = CreateFrame("ScrollFrame", nil, frame, "UIPanelInputScrollFrameTemplate")
     if scrollFrame.CharCount then
         scrollFrame.CharCount:Hide()
     end
-    scrollFrame:SetPoint("TOP", hint, "BOTTOM", 0, -12)
+    scrollFrame:SetPoint("TOP", title, "BOTTOM", 0, -12)
     scrollFrame:SetPoint("LEFT", frame, "LEFT", 20, 0)
     scrollFrame:SetPoint("RIGHT", frame, "RIGHT", -20, 0)
     scrollFrame:EnableMouse(true)
@@ -62,13 +36,9 @@ local function CreateImportExportContent(frame)
         end
     end)
 
-    local actionButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    actionButton:SetSize(80, 22)
-    actionButton:SetPoint("BOTTOM", frame, "BOTTOM", 0, 17)
-
     scrollFrame:SetPoint("BOTTOM", actionButton, "TOP", 0, 11)
 
-    return hint, editBox, actionButton
+    return title, editBox
 end
 
 function addon.ImportExportUI:Init()
@@ -77,26 +47,21 @@ function addon.ImportExportUI:Init()
     end
 
     -- Import
-    local importFrame = CreateBaseFrame("ChallengeModeTimerImport")
+    local runsFrame = addon.OptionsUI:GetRunsFrame()
+    local importFrame = addon.PopupUI:CreatePopupFrame(runsFrame)
     self.importFrame = importFrame
 
-    local importHint, importEditBox, importButton = CreateImportExportContent(importFrame)
-    importHint:SetText("Paste import string below")
+    local importButton = addon.PopupUI:AddButtonsToPopupFrame(importFrame, true)
     importButton:SetText("Import")
+    importButton:Hide()
+
+    local importTitle, importEditBox = CreateImportExportContent(importFrame, importButton)
+    importTitle:SetText("Paste import string below")
 
     local importErrorText = importFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    importErrorText:SetPoint("CENTER", importButton, "CENTER", 0, 0)
+    importErrorText:SetPoint("CENTER", importButton, "CENTER", 10, 0)
     importErrorText:SetTextColor(1, 0.2, 0.2, 1)
     importErrorText:Hide()
-
-    local importAbortButton = CreateFrame("Button", nil, importFrame, "UIPanelButtonTemplate")
-    importAbortButton:SetPoint("LEFT", importFrame, "LEFT", 14, 0)
-    importAbortButton:SetPoint("TOP", importButton, "TOP", 0, 0)
-    importAbortButton:SetText("Abort")
-    importAbortButton:SetWidth(50)
-    importAbortButton:SetScript("OnClick", function()
-        importFrame:Hide()
-    end)
 
     importEditBox:SetScript("OnTextChanged", function()
         GameTooltip:Hide()
@@ -129,17 +94,19 @@ function addon.ImportExportUI:Init()
     self.importEditBox = importEditBox
 
     -- Export
-    local exportFrame = CreateBaseFrame("ChallengeModeTimerExport")
+    local exportFrame = addon.PopupUI:CreatePopupFrame(runsFrame)
     self.exportFrame = exportFrame
 
-    local exportHint, exportEditBox, exportButton = CreateImportExportContent(exportFrame)
-    exportHint:SetText("Press ctrl-a and ctrl-c to copy")
+    local exportButton = addon.PopupUI:AddButtonsToPopupFrame(exportFrame)
     exportButton:SetText("OK")
     exportButton:SetScript("OnClick", function()
         exportFrame:Hide()
     end)
+
+    local exportTitle, exportEditBox = CreateImportExportContent(exportFrame, exportButton)
+    exportTitle:SetText("Press ctrl-a and ctrl-c to copy")
+
     self.exportEditBox = exportEditBox
-    self.exportButton = exportButton
 end
 
 function addon.ImportExportUI:ToggleImport()
@@ -148,11 +115,9 @@ function addon.ImportExportUI:ToggleImport()
         self.importFrame:Hide()
         return
     end
-    self.exportFrame:Hide()
-
+    self.importFrame:Show()
     self.importFrame:SetScript("OnEnter", nil)
     self.importEditBox:SetText("")
-    self.importFrame:Show()
 end
 
 function addon.ImportExportUI:ToggleExport(instanceId, run)
@@ -161,13 +126,11 @@ function addon.ImportExportUI:ToggleExport(instanceId, run)
         self.exportFrame:Hide()
         return
     end
-    self.importFrame:Hide()
-
+    self.exportFrame:Show()
     local exportString = addon.ImportExport:ExportRun(instanceId, run)
     self.exportEditBox:SetText(exportString)
     self.exportFrame:SetScript("OnEnter", function()
         addon.RunHistoryUI:ShowRunTooltip(self.exportFrame, instanceId, run, RUN_TOOLTIP_ANCHOR)
     end)
     addon.RunHistoryUI:ShowRunTooltip(self.exportFrame, instanceId, run, RUN_TOOLTIP_ANCHOR)
-    self.exportFrame:Show()
 end

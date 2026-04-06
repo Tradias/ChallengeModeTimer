@@ -23,7 +23,9 @@ RunUI.lua
 Run.lua
 ImportExport.lua
 OptionsUI.lua
+PopupUI.lua
 ImportExportUI.lua
+CreateUI.lua
 RunHistoryUI.lua
 RunHistory.lua
 AppearanceUI.lua

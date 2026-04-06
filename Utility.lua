@@ -18,6 +18,10 @@ function addon.Utility:FormatTime(seconds, precision)
     return string.format("%d:%02d." .. tenthsFormatString, minutes, secs, tenths)
 end
 
+function addon.Utility:RoundDuration(seconds)
+    return math.floor(seconds * 1000 + 0.5) / 1000
+end
+
 function addon.Utility:DeepCopy(obj)
     if type(obj) ~= 'table' then return obj end
     local res = {}

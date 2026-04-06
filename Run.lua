@@ -53,12 +53,8 @@ local function WoWGetWorldElapsedTime()
     return worldElapsedTime
 end
 
-local function RoundDuration(duration)
-    return math.floor(duration * 1000 + 0.5) / 1000
-end
-
 local function SetDurationFromNow(run)
-    run.duration = RoundDuration(GetTime() - run.state.startTime)
+    run.duration = addon.Utility:RoundDuration(GetTime() - run.state.startTime)
 end
 
 local function SetStartTime(run, startTime)
@@ -176,7 +172,7 @@ local function HasOnlyOneIncompleteSplit(run)
 end
 
 local function UpdateSplitDuration(run, split, criteriaInfo)
-    split.duration = RoundDuration(GetTime() - run.state.startTime - criteriaInfo.elapsed)
+    split.duration = addon.Utility:RoundDuration(GetTime() - run.state.startTime - criteriaInfo.elapsed)
 end
 
 local function UpdateSplit(run, split, splitDefinition)
@@ -459,7 +455,7 @@ function addon.Run:CreateSampleRun(instanceId, totalTime, completed, secondsAgo)
     run.completed = completed and true or false
     run.state.startTime = GetTime() - totalTime
     run.startTimestamp = time() - startOffset - totalTime
-    run.duration = RoundDuration(totalTime)
+    run.duration = addon.Utility:RoundDuration(totalTime)
     if run.completed then
         run.medalIndex = addon.Dungeons:GetMedalIndexByDuration(instanceId, run.duration)
     end
@@ -472,7 +468,7 @@ function addon.Run:CreateSampleRun(instanceId, totalTime, completed, secondsAgo)
         local totalQuantity = splitDefinition.totalQuantity or 0
         if index <= completedSplits then
             split.completed = true
-            split.duration = RoundDuration(totalTime * (index / splitCount))
+            split.duration = addon.Utility:RoundDuration(totalTime * (index / splitCount))
             split.quantity = totalQuantity
         else
             split.completed = false

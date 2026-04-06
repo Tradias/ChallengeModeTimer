@@ -87,6 +87,7 @@ end
 
 function addon.RunHistory:AddRun(instanceId, run)
     local runs = GetRunHistory(instanceId).runs
+    run.state = nil
     table.insert(runs, 1, run)
     return 1
 end

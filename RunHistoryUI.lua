@@ -49,16 +49,16 @@ local function BuildMedalText(run)
 end
 
 local function BuildRunnerNameText(run)
-    if not run.runners or #run.runners < 1 then
-        return "-"
-    end
-    local player = run.runners[1]
-    local classColor = addon.Utility:GetClassColorById(player.classId)
-    local colorStr = string.format("ff%02x%02x%02x", classColor.r * 255, classColor.g * 255, classColor.b * 255)
     local importStr = ""
     if run.importTimestamp then
         importStr = "*"
     end
+    if not run.runners then
+        return importStr
+    end
+    local player = run.runners[1]
+    local classColor = addon.Utility:GetClassColorById(player.classId)
+    local colorStr = string.format("ff%02x%02x%02x", classColor.r * 255, classColor.g * 255, classColor.b * 255)
     return string.format("|c%s%s%s|r", colorStr, player.name, importStr)
 end
 
@@ -109,7 +109,7 @@ local function ShowMedalsTooltip(frame, instanceId)
 end
 
 local function AddRunnerLinesToTooltip(run)
-    for _, runner in ipairs(run.runners or {}) do
+    for _, runner in ipairs(run.runners) do
         local name = runner.name
         local classColor = addon.Utility:GetClassColorById(runner.classId)
         GameTooltip:AddLine(name, classColor.r, classColor.g, classColor.b)
@@ -118,9 +118,13 @@ end
 
 local function ShowRunnersTooltip(frame, run)
     GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
-    GameTooltip:SetText("Runners", 1, 0.82, 0)
 
-    AddRunnerLinesToTooltip(run)
+    if run.runners then
+        GameTooltip:SetText("Runners", 1, 0.82, 0)
+        AddRunnerLinesToTooltip(run)
+    else
+        GameTooltip:SetText("Created Run", 1, 0.82, 0)
+    end
 
     if run.importTimestamp then
         GameTooltip:AddLine("\n*Imported run", 1, 1, 1)
@@ -244,11 +248,13 @@ local function SendRunToChat(instanceId, run)
         SendMessageInCurrentChannel(editBox, string.format("%s - %s", label, splitDurationText))
     end
 
-    local runnersText = "Runners: " .. run.runners[1].name
-    for i = 2, #run.runners do
-        runnersText = runnersText .. ", " .. run.runners[i].name
+    if run.runners then
+        local runnersText = "Runners: " .. run.runners[1].name
+        for i = 2, #run.runners do
+            runnersText = runnersText .. ", " .. run.runners[i].name
+        end
+        SendMessageInCurrentChannel(editBox, runnersText)
     end
-    SendMessageInCurrentChannel(editBox, runnersText)
 end
 
 local function UpdateComparisonRunIndex(table, instanceId, index)
@@ -332,8 +338,9 @@ local function BuildColumns()
             defaultsort = addon.LST.SORT_ASC,
             comparesort = function(tableFrame, rowa, rowb, sortby)
                 return CompareRowValues(tableFrame, rowa, rowb, sortby, function(a, b)
-                    local aRunner = a.run.runners[1].name
-                    local bRunner = b.run.runners[1].name
+                    local createdRun = "|" -- character larger than 'z'
+                    local aRunner = a.run.runners and a.run.runners[1].name or createdRun
+                    local bRunner = b.run.runners and b.run.runners[1].name or createdRun
                     return aRunner < bRunner or (aRunner == bRunner and (a.run.startTimestamp > b.run.startTimestamp or
                         (a.run.startTimestamp == b.run.startTimestamp and rowa > rowb)))
                 end)
@@ -619,7 +626,7 @@ function addon.RunHistoryUI:Init()
     bottomBarButtonFrame:SetPoint("BOTTOMRIGHT", bottomBarFrame, "BOTTOMRIGHT", 0, 0)
 
     local importButton = CreateFrame("Button", nil, bottomBarButtonFrame, "UIPanelButtonTemplate")
-    importButton:SetPoint("LEFT", bottomBarButtonFrame, "LEFT", 10, 2)
+    importButton:SetPoint("LEFT", bottomBarButtonFrame, "LEFT", 10, 1)
     importButton:SetSize(bestRunButton:GetWidth(), bestRunButton:GetHeight())
     importButton:SetText("Import")
     importButton:SetScript("OnClick", function()
@@ -632,11 +639,7 @@ function addon.RunHistoryUI:Init()
     exportButton:SetText("Export")
     exportButton:SetScript("OnClick", function()
         local run = addon.RunHistory:GetComparisonRun(self.selectedInstanceId)
-        if run then
-            addon.ImportExportUI:ToggleExport(self.selectedInstanceId, run)
-        else
-            addon.ImportExportUI:ToggleExport()
-        end
+        addon.ImportExportUI:ToggleExport(self.selectedInstanceId, run)
     end)
     self.exportButton = exportButton
 
@@ -654,6 +657,14 @@ function addon.RunHistoryUI:Init()
         if not exportButton:IsEnabled() then
             GameTooltip:Hide()
         end
+    end)
+
+    local createButton = CreateFrame("Button", nil, bottomBarButtonFrame, "UIPanelButtonTemplate")
+    createButton:SetPoint("LEFT", exportButton, "RIGHT", 10, 0)
+    createButton:SetSize(importButton:GetWidth(), importButton:GetHeight())
+    createButton:SetText("Create")
+    createButton:SetScript("OnClick", function()
+        addon.CreateUI:ToggleCreate(self.selectedInstanceId)
     end)
 
     local deleteModeButton = CreateFrame("Button", nil, bottomBarButtonFrame, "UIPanelButtonTemplate")
@@ -682,14 +693,14 @@ function addon.RunHistoryUI:Init()
     end)
 
     local deleteModeText = bottomBarDeleteModeFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    deleteModeText:SetPoint("LEFT", bottomBarDeleteModeFrame, "LEFT", 10, 2)
+    deleteModeText:SetPoint("LEFT", bottomBarDeleteModeFrame, "LEFT", 10, 1)
     deleteModeText:SetText("Click on a run to delete")
     deleteModeText:SetTextColor(unpack(DELETE_MODE_HIGHTLIGHT))
     deleteModeText:SetAlpha(1)
     SetFont(deleteModeText, 12)
 
     local deleteModeDoneButton = CreateFrame("Button", nil, bottomBarDeleteModeFrame, "UIPanelButtonTemplate")
-    deleteModeDoneButton:SetPoint("RIGHT", bottomBarButtonFrame, "RIGHT", -10, 2)
+    deleteModeDoneButton:SetPoint("RIGHT", bottomBarButtonFrame, "RIGHT", -10, 1)
     deleteModeDoneButton:SetSize(100, bestRunButton:GetHeight())
     deleteModeDoneButton:SetText("Done")
     deleteModeDoneButton:SetScript("OnClick", function()
@@ -735,8 +746,10 @@ function addon.RunHistoryUI:ShowRunTooltip(frame, instanceId, run, anchor)
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine("Splits", 1, 0.82, 0)
     AddSplitLinesToTooltip(instanceId, run)
-    GameTooltip:AddLine(" ")
-    GameTooltip:AddLine("Runners", 1, 0.82, 0)
-    AddRunnerLinesToTooltip(run)
+    if run.runners then
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine("Runners", 1, 0.82, 0)
+        AddRunnerLinesToTooltip(run)
+    end
     GameTooltip:Show()
 end
