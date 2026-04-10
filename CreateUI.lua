@@ -67,10 +67,12 @@ end
 local function HasValidDuration(splitLines)
     local validDurationCount = 0
     for _, line in ipairs(splitLines) do
-        if line.duration then
-            validDurationCount = validDurationCount + 1
-        elseif line.editBox:GetText() ~= "" then
-            return false
+        if line.frame:IsShown() then
+            if line.duration then
+                validDurationCount = validDurationCount + 1
+            elseif line.editBox:GetText() ~= "" then
+                return false
+            end
         end
     end
     return (validDurationCount > 0)
@@ -260,9 +262,10 @@ function addon.CreateUI:ToggleEdit(instanceId, runIndex)
     self.editRun = run
     run = addon.Utility:DeepCopy(run)
 
-    for index, line in ipairs(self.editSplitLines) do
-        local splitDuration = run.splits[index].duration
+    for index, split in ipairs(run.splits) do
+        local splitDuration = split.duration
         if splitDuration ~= 0 then
+            local line = self.editSplitLines[index]
             line.editBox:SetText(addon.Utility:FormatTime(splitDuration, 3))
         end
     end
