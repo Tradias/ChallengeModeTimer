@@ -8,34 +8,8 @@ local function CreateImportExportContent(frame, actionButton)
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOP", frame, "TOP", 0, -20)
 
-    local scrollFrame = CreateFrame("ScrollFrame", nil, frame, "UIPanelInputScrollFrameTemplate")
-    if scrollFrame.CharCount then
-        scrollFrame.CharCount:Hide()
-    end
+    local scrollFrame, editBox = addon.Utility:CreateScrollableEditBox(frame)
     scrollFrame:SetPoint("TOP", title, "BOTTOM", 0, -12)
-    scrollFrame:SetPoint("LEFT", frame, "LEFT", 20, 0)
-    scrollFrame:SetPoint("RIGHT", frame, "RIGHT", -20, 0)
-    scrollFrame:EnableMouse(true)
-    scrollFrame:SetScript("OnMouseDown", function(_, button)
-        if button == "RightButton" then
-            frame:Hide()
-            return
-        end
-    end)
-
-    local editBox = scrollFrame.EditBox
-    editBox:SetMultiLine(true)
-    editBox:SetAutoFocus(true)
-    editBox:SetFontObject("ChatFontNormal")
-    editBox:SetWidth(scrollFrame:GetWidth() - 15)
-    editBox:EnableMouse(true)
-    editBox:SetScript("OnMouseUp", function(_, button)
-        if button == "RightButton" then
-            editBox:ClearFocus()
-            frame:Hide()
-        end
-    end)
-
     scrollFrame:SetPoint("BOTTOM", actionButton, "TOP", 0, 11)
 
     return title, editBox
@@ -118,6 +92,7 @@ function addon.ImportExportUI:ToggleImport()
     self.importFrame:Show()
     self.importFrame:SetScript("OnEnter", nil)
     self.importEditBox:SetText("")
+    self.importEditBox:SetFocus(true)
 end
 
 function addon.ImportExportUI:ToggleExport(instanceId, run)
@@ -129,6 +104,7 @@ function addon.ImportExportUI:ToggleExport(instanceId, run)
     self.exportFrame:Show()
     local exportString = addon.ImportExport:ExportRun(instanceId, run)
     self.exportEditBox:SetText(exportString)
+    self.exportEditBox:SetFocus(true)
     self.exportFrame:SetScript("OnEnter", function()
         addon.RunHistoryUI:ShowRunTooltip(self.exportFrame, instanceId, run, RUN_TOOLTIP_ANCHOR)
     end)

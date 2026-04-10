@@ -108,6 +108,19 @@ local function ShowMedalsTooltip(frame, instanceId)
     GameTooltip:Show()
 end
 
+local function ShowCommentTooltip(frame, run)
+    if not run.comment then
+        return
+    end
+
+    GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
+    GameTooltip:SetText("Comment", 1, 0.82, 0)
+
+    GameTooltip:AddLine(run.comment, 1, 1, 1)
+
+    GameTooltip:Show()
+end
+
 local function AddRunnerLinesToTooltip(run)
     for _, runner in ipairs(run.runners) do
         local name = runner.name
@@ -178,7 +191,7 @@ local function FindBestFilteredRun(table)
     for _, realrow in ipairs(table.filtered) do
         local rowData = table:GetRow(realrow)
         local run = rowData.run
-        if not run.importTimestamp then
+        if not run.importTimestamp and run.runners then
             local duration = run.duration
             local completedSplitCount = CountCompletedSplits(run)
             if completedSplitCount > bestCompletedSplitCount then
@@ -506,7 +519,7 @@ local function CreateTable(self)
             if column == RUNNER_COLUMN_INDEX then
                 ShowRunnersTooltip(cellFrame, rowData.run)
             elseif column == MEDAL_COLUMN_INDEX then
-                ShowMedalsTooltip(cellFrame, self.selectedInstanceId)
+                ShowCommentTooltip(cellFrame, rowData.run)
             else
                 ShowRunSplitsTooltip(cellFrame, self.selectedInstanceId, rowData.run)
             end
@@ -767,6 +780,11 @@ function addon.RunHistoryUI:ShowRunTooltip(frame, instanceId, run, anchor)
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine("Runners", 1, 0.82, 0)
         AddRunnerLinesToTooltip(run)
+    end
+    if run.comment then
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine("Comment", 1, 0.82, 0)
+        GameTooltip:AddLine(run.comment, 1, 1, 1)
     end
     GameTooltip:Show()
 end

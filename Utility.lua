@@ -51,3 +51,36 @@ function addon.Utility:DebugPrint(text)
         DevTools_Dump(text)
     end
 end
+
+function addon.Utility:CreateScrollableEditBox(frame)
+    local scrollFrame = CreateFrame("ScrollFrame", nil, frame, "UIPanelInputScrollFrameTemplate")
+    if scrollFrame.CharCount then
+        scrollFrame.CharCount:Hide()
+    end
+    scrollFrame:SetPoint("TOP", frame, "BOTTOM", 0, -12)
+    scrollFrame:SetPoint("LEFT", frame, "LEFT", 20, 0)
+    scrollFrame:SetPoint("RIGHT", frame, "RIGHT", -20, 0)
+    scrollFrame:EnableMouse(true)
+    scrollFrame:SetScript("OnMouseDown", function(_, button)
+        if button == "RightButton" then
+            frame:Hide()
+            return
+        else
+            scrollFrame.EditBox:SetFocus(true)
+        end
+    end)
+
+    local editBox = scrollFrame.EditBox
+    editBox:SetMultiLine(true)
+    editBox:SetFontObject("ChatFontNormal")
+    editBox:SetWidth(scrollFrame:GetWidth() - 15)
+    editBox:EnableMouse(true)
+    editBox:SetScript("OnMouseUp", function(_, button)
+        if button == "RightButton" then
+            editBox:ClearFocus()
+            frame:Hide()
+        end
+    end)
+
+    return scrollFrame, editBox
+end

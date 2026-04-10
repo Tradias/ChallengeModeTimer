@@ -18,7 +18,7 @@ local function ParseDuration(text)
     return addon.Utility:RoundDuration(minutesNumber)
 end
 
-local function UpdateRun(instanceId, run, splitLines)
+local function UpdateRun(instanceId, run, splitLines, comment)
     local splitProfile = addon.SplitProfile:Get(instanceId)
 
     local completedCount = 0
@@ -48,13 +48,19 @@ local function UpdateRun(instanceId, run, splitLines)
     else
         run.medalIndex = nil
     end
+
+    if comment == "" then
+        run.comment = nil
+    else
+        run.comment = comment
+    end
 end
 
-local function CreateRun(instanceId, splitLines)
+local function CreateRun(instanceId, splitLines, comment)
     local run = addon.Run:CreateRun(instanceId)
     run.runners = nil
     run.startTimestamp = time()
-    UpdateRun(instanceId, run, splitLines)
+    UpdateRun(instanceId, run, splitLines, comment)
     return run
 end
 
@@ -84,8 +90,9 @@ local function InitFrame(frame, instanceId, splitLines, confirmButton)
 
     local lineHeight = 27
     local distanceFromTop = 20
+    local commentBoxHeight = 80
 
-    frame:SetHeight(#splitProfile.splits * lineHeight + 2 * distanceFromTop + 29)
+    frame:SetHeight(#splitProfile.splits * lineHeight + 2 * distanceFromTop + commentBoxHeight + 29)
 
     for index, splitDefinition in ipairs(splitProfile.splits) do
         local line = splitLines[index]
@@ -150,6 +157,24 @@ local function InitFrame(frame, instanceId, splitLines, confirmButton)
         splitLines[index].frame:Hide()
     end
 
+    if not frame.commentBox then
+        local commentLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        commentLabel:SetPoint("LEFT", frame, "LEFT", 20, 0)
+        commentLabel:SetText("Comment")
+
+        local scrollFrame, editBox = addon.Utility:CreateScrollableEditBox(frame)
+        editBox:SetMaxLetters(300)
+
+        scrollFrame:SetPoint("TOP", commentLabel, "BOTTOM", 0, -11)
+        scrollFrame:SetPoint("BOTTOM", confirmButton, "TOP", 0, 11)
+
+        frame.commentLabel = commentLabel
+        frame.commentBox = editBox
+    end
+
+    frame.commentLabel:SetPoint("TOP", splitLines[#splitProfile.splits].frame, "BOTTOM", 0, -12)
+    frame.commentBox:SetText("")
+
     frame:Show()
     FocusFirstEmptyEditBox(splitLines)
 end
@@ -204,7 +229,7 @@ function addon.CreateUI:ToggleCreate(instanceId)
     self.createInstanceId = instanceId
 
     createButton:SetScript("OnClick", function()
-        local run = CreateRun(instanceId, self.createSplitLines)
+        local run = CreateRun(instanceId, self.createSplitLines, self.createFrame.commentBox:GetText())
         local runIndex = addon.RunHistory:AddRun(instanceId, run)
         addon.RunHistory:SetComparisonRunIndex(instanceId, runIndex)
         self.createInstanceId = 0
@@ -212,7 +237,7 @@ function addon.CreateUI:ToggleCreate(instanceId)
         addon.RunHistoryUI:Refresh()
     end)
     createButton:SetScript("OnEnter", function()
-        local run = CreateRun(instanceId, self.createSplitLines)
+        local run = CreateRun(instanceId, self.createSplitLines, self.createFrame.commentBox:GetText())
         addon.RunHistoryUI:ShowRunTooltip(self.createButton, instanceId, run)
     end)
     createButton:SetScript("OnLeave", function()
@@ -243,14 +268,18 @@ function addon.CreateUI:ToggleEdit(instanceId, runIndex)
     end
     FocusFirstEmptyEditBox(self.editSplitLines)
 
+    if run.comment then
+        self.editFrame.commentBox:SetText(run.comment)
+    end
+
     editButton:SetScript("OnClick", function()
-        UpdateRun(instanceId, run, self.editSplitLines)
+        UpdateRun(instanceId, run, self.editSplitLines, self.editFrame.commentBox:GetText())
         addon.RunHistory:SetRun(instanceId, run, runIndex)
         addon.RunHistoryUI:Refresh()
         self.editFrame:Hide()
     end)
     editButton:SetScript("OnEnter", function()
-        UpdateRun(instanceId, run, self.editSplitLines)
+        UpdateRun(instanceId, run, self.editSplitLines, self.editFrame.commentBox:GetText())
         addon.RunHistoryUI:ShowRunTooltip(self.editButton, instanceId, run)
     end)
     editButton:SetScript("OnLeave", function()
