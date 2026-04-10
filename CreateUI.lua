@@ -18,14 +18,11 @@ local function ParseDuration(text)
     return addon.Utility:RoundDuration(minutesNumber)
 end
 
-local function CreateRun(splitLines, instanceId)
-    local run = addon.Run:CreateRun(instanceId)
-    run.runners = nil
+local function UpdateRun(instanceId, run, splitLines)
     local splitProfile = addon.SplitProfile:Get(instanceId)
 
     local completedCount = 0
 
-    run.startTimestamp = time()
     run.duration = 0
 
     for index, split in ipairs(run.splits) do
@@ -34,18 +31,30 @@ local function CreateRun(splitLines, instanceId)
             completedCount = completedCount + 1
             split.completed = true
             split.duration = duration
-            if duration > run.duration then
-                run.duration = duration
-            end
             split.quantity = splitProfile.splits[index].totalQuantity
+        else
+            split.completed = false
+            split.duration = 0
+            split.quantity = 0
+        end
+        if split.duration > run.duration then
+            run.duration = duration
         end
     end
 
     run.completed = (completedCount == #run.splits)
     if run.completed then
         run.medalIndex = addon.Dungeons:GetMedalIndexByDuration(instanceId, run.duration)
+    else
+        run.medalIndex = nil
     end
+end
 
+local function CreateRun(instanceId, splitLines)
+    local run = addon.Run:CreateRun(instanceId)
+    run.runners = nil
+    run.startTimestamp = time()
+    UpdateRun(instanceId, run, splitLines)
     return run
 end
 
@@ -61,52 +70,30 @@ local function HasValidDuration(splitLines)
     return (validDurationCount > 0)
 end
 
-function addon.CreateUI:Init()
-    if self.createFrame then
-        return
+local function FocusFirstEmptyEditBox(splitLines)
+    for _, line in ipairs(splitLines) do
+        if line.editBox:GetText() == "" then
+            line.editBox:SetFocus(true)
+            return
+        end
     end
-
-    local createFrame = addon.PopupUI:CreatePopupFrame(addon.OptionsUI:GetRunsFrame())
-    self.createFrame = createFrame
-
-    local createButton = addon.PopupUI:AddButtonsToPopupFrame(createFrame, true)
-    self.createButton = createButton
-
-    self.instanceId = 0
-    self.splitLines = {}
 end
 
-function addon.CreateUI:ToggleCreate(instanceId)
-    self:Init()
-    if self.instanceId == instanceId then
-        if self.createFrame:IsShown() then
-            self.createFrame:Hide()
-        else
-            self.createFrame:Show()
-            for _, line in ipairs(self.splitLines) do
-                if line.editBox:GetText() == "" then
-                    line.editBox:SetFocus(true)
-                    return
-                end
-            end
-        end
-        return
-    end
-
+local function InitFrame(frame, instanceId, splitLines, confirmButton)
     local splitProfile = addon.SplitProfile:Get(instanceId)
 
     local lineHeight = 27
     local distanceFromTop = 20
 
-    self.createFrame:SetHeight(#splitProfile.splits * lineHeight + 2 * distanceFromTop + 29)
+    frame:SetHeight(#splitProfile.splits * lineHeight + 2 * distanceFromTop + 29)
 
     for index, splitDefinition in ipairs(splitProfile.splits) do
-        local line = self.splitLines[index]
+        local line = splitLines[index]
         if not line then
-            local lineFrame = CreateFrame("Frame", nil, self.createFrame)
-            lineFrame:SetPoint("TOPLEFT", self.createFrame, "TOPLEFT", 0,
+            local lineFrame = CreateFrame("Frame", nil, frame)
+            lineFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 0,
                 -(index - 1) * lineHeight - distanceFromTop)
-            lineFrame:SetSize(self.createFrame:GetWidth(), lineHeight)
+            lineFrame:SetSize(frame:GetWidth(), lineHeight)
 
             local label = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             label:SetWidth(180)
@@ -125,10 +112,10 @@ function addon.CreateUI:ToggleCreate(instanceId)
             end)
             editBox:SetScript("OnTabPressed", function(eb)
                 eb:ClearFocus()
-                if index < #self.splitLines then
-                    self.splitLines[index + 1].editBox:SetFocus(true)
+                if index < #splitLines then
+                    splitLines[index + 1].editBox:SetFocus(true)
                 else
-                    self.splitLines[1].editBox:SetFocus(true)
+                    splitLines[1].editBox:SetFocus(true)
                 end
             end)
 
@@ -142,14 +129,14 @@ function addon.CreateUI:ToggleCreate(instanceId)
 
             editBox:HookScript("OnTextChanged", function()
                 line.duration = ParseDuration(editBox:GetText())
-                if HasValidDuration(self.splitLines) then
-                    self.createButton:Enable()
+                if HasValidDuration(splitLines) then
+                    confirmButton:Enable()
                 else
-                    self.createButton:Disable()
+                    confirmButton:Disable()
                 end
             end)
 
-            self.splitLines[index] = line
+            splitLines[index] = line
         end
 
         line.label:SetText(splitDefinition.name)
@@ -159,26 +146,114 @@ function addon.CreateUI:ToggleCreate(instanceId)
         line.frame:Show()
     end
 
-    for index = #splitProfile.splits + 1, #self.splitLines do
-        self.splitLines[index].frame:Hide()
+    for index = #splitProfile.splits + 1, #splitLines do
+        splitLines[index].frame:Hide()
     end
 
-    self.createButton:SetScript("OnClick", function()
-        local run = CreateRun(self.splitLines, instanceId)
-        addon.RunHistory:AddRun(instanceId, run)
-        addon.RunHistoryUI:Refresh()
+    frame:Show()
+    FocusFirstEmptyEditBox(splitLines)
+end
+
+local function HandleToggleBehavior(frame, splitLines)
+    if frame:IsShown() then
+        frame:Hide()
+    else
+        frame:Show()
+        FocusFirstEmptyEditBox(splitLines)
+    end
+end
+
+function addon.CreateUI:Init()
+    if self.createFrame then
+        return
+    end
+
+    -- Create
+    local createFrame = addon.PopupUI:CreatePopupFrame(addon.OptionsUI:GetRunsFrame())
+    self.createFrame = createFrame
+
+    local createButton = addon.PopupUI:AddButtonsToPopupFrame(createFrame, true)
+    self.createButton = createButton
+
+    self.createInstanceId = 0
+    self.createSplitLines = {}
+
+    -- Edit
+    local editFrame = addon.PopupUI:CreatePopupFrame(addon.OptionsUI:GetRunsFrame())
+    self.editFrame = editFrame
+
+    local editButton = addon.PopupUI:AddButtonsToPopupFrame(editFrame, true)
+    editButton:SetText("Save")
+    self.editButton = editButton
+
+    self.editInstanceId = 0
+    self.editRun = {}
+    self.editSplitLines = {}
+end
+
+function addon.CreateUI:ToggleCreate(instanceId)
+    self:Init()
+    if self.createInstanceId == instanceId then
+        HandleToggleBehavior(self.createFrame, self.createSplitLines)
+        return
+    end
+
+    local createButton = self.createButton
+
+    InitFrame(self.createFrame, instanceId, self.createSplitLines, createButton)
+    self.createInstanceId = instanceId
+
+    createButton:SetScript("OnClick", function()
+        local run = CreateRun(instanceId, self.createSplitLines)
+        local runIndex = addon.RunHistory:AddRun(instanceId, run)
+        addon.RunHistory:SetComparisonRunIndex(instanceId, runIndex)
+        self.createInstanceId = 0
         self.createFrame:Hide()
+        addon.RunHistoryUI:Refresh()
     end)
-    self.createButton:SetScript("OnEnter", function()
-        local run = CreateRun(self.splitLines, instanceId)
+    createButton:SetScript("OnEnter", function()
+        local run = CreateRun(instanceId, self.createSplitLines)
         addon.RunHistoryUI:ShowRunTooltip(self.createButton, instanceId, run)
     end)
-    self.createButton:SetScript("OnLeave", function()
+    createButton:SetScript("OnLeave", function()
         GameTooltip:Hide()
     end)
+end
 
-    self.instanceId = instanceId
-    self.createFrame:Show()
+function addon.CreateUI:ToggleEdit(instanceId, runIndex)
+    self:Init()
+    local run = addon.RunHistory:GetRun(instanceId, runIndex)
+    if self.editInstanceId == instanceId and self.editRun == run then
+        HandleToggleBehavior(self.editFrame, self.editSplitLines)
+        return
+    end
 
-    self.splitLines[1].editBox:SetFocus(true)
+    local editButton = self.editButton
+
+    InitFrame(self.editFrame, instanceId, self.editSplitLines, editButton)
+    self.editInstanceId = instanceId
+    self.editRun = run
+    run = addon.Utility:DeepCopy(run)
+
+    for index, line in ipairs(self.editSplitLines) do
+        local splitDuration = run.splits[index].duration
+        if splitDuration ~= 0 then
+            line.editBox:SetText(addon.Utility:FormatTime(splitDuration, 3))
+        end
+    end
+    FocusFirstEmptyEditBox(self.editSplitLines)
+
+    editButton:SetScript("OnClick", function()
+        UpdateRun(instanceId, run, self.editSplitLines)
+        addon.RunHistory:SetRun(instanceId, run, runIndex)
+        addon.RunHistoryUI:Refresh()
+        self.editFrame:Hide()
+    end)
+    editButton:SetScript("OnEnter", function()
+        UpdateRun(instanceId, run, self.editSplitLines)
+        addon.RunHistoryUI:ShowRunTooltip(self.editButton, instanceId, run)
+    end)
+    editButton:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
 end

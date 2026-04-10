@@ -27,6 +27,16 @@ function addon.RunHistory:Init()
     end
 end
 
+function addon.RunHistory:GetRun(instanceId, index)
+    local runs = GetRunHistory(instanceId).runs
+    return runs[index]
+end
+
+function addon.RunHistory:SetRun(instanceId, run, index)
+    local runs = GetRunHistory(instanceId).runs
+    runs[index] = run
+end
+
 function addon.RunHistory:GetCurrentRun(instanceId)
     local runHistory = GetRunHistory(instanceId)
     if not runHistory then

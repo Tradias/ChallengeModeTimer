@@ -204,9 +204,9 @@ local function ShowBestRunTooltip(frame, table, instanceId)
     addon.RunHistoryUI:ShowRunTooltip(frame, instanceId, run)
 end
 
-local function ShowExportTooltip(frame)
+local function ShowExportTooltip(frame, text)
     GameTooltip:SetOwner(frame, "ANCHOR_BOTTOMRIGHT")
-    GameTooltip:SetText("Click on a run to export first", 1, 1, 1)
+    GameTooltip:SetText(text, 1, 1, 1)
     GameTooltip:Show()
 end
 
@@ -390,8 +390,10 @@ local function UpdateComparisonHintAndExportButton(self, hasSelection)
     end
     if hasSelection then
         self.exportButton:Enable()
+        self.editButton:Enable()
     else
         self.exportButton:Disable()
+        self.editButton:Disable()
     end
 end
 
@@ -523,6 +525,25 @@ local function CreateTable(self)
     return tableFrame
 end
 
+local function AddDisabledButtonTooltip(button, text)
+    local tooltipFrame = CreateFrame("Frame", nil, button)
+    tooltipFrame:SetPoint("TOPLEFT", button, "TOPLEFT", 0, 0)
+    tooltipFrame:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0, 0)
+    tooltipFrame:SetPropagateMouseClicks(true)
+    tooltipFrame:SetPropagateMouseMotion(true)
+    tooltipFrame:SetScript("OnEnter", function()
+        if not button:IsEnabled() then
+            ShowExportTooltip(button, text)
+        end
+    end)
+    tooltipFrame:SetScript("OnLeave", function()
+        if not button:IsEnabled() then
+            GameTooltip:Hide()
+        end
+    end)
+    return tooltipFrame
+end
+
 function addon.RunHistoryUI:Init()
     local runsFrame = addon.OptionsUI:GetRunsFrame()
     self.runsFrame = runsFrame
@@ -634,38 +655,34 @@ function addon.RunHistoryUI:Init()
     end)
 
     local exportButton = CreateFrame("Button", nil, bottomBarButtonFrame, "UIPanelButtonTemplate")
-    exportButton:SetPoint("LEFT", importButton, "RIGHT", 10, 0)
+    exportButton:SetPoint("LEFT", importButton, "RIGHT", 8, 0)
     exportButton:SetSize(importButton:GetWidth(), importButton:GetHeight())
     exportButton:SetText("Export")
     exportButton:SetScript("OnClick", function()
         local run = addon.RunHistory:GetComparisonRun(self.selectedInstanceId)
         addon.ImportExportUI:ToggleExport(self.selectedInstanceId, run)
     end)
+    AddDisabledButtonTooltip(exportButton, "Click on a run to export first")
     self.exportButton = exportButton
 
-    local exportTooltipFrame = CreateFrame("Frame", nil, exportButton)
-    exportTooltipFrame:SetPoint("TOPLEFT", exportButton, "TOPLEFT", 0, 0)
-    exportTooltipFrame:SetPoint("BOTTOMRIGHT", exportButton, "BOTTOMRIGHT", 0, 0)
-    exportTooltipFrame:SetPropagateMouseClicks(true)
-    exportTooltipFrame:SetPropagateMouseMotion(true)
-    exportTooltipFrame:SetScript("OnEnter", function()
-        if not exportButton:IsEnabled() then
-            ShowExportTooltip(exportButton)
-        end
-    end)
-    exportTooltipFrame:SetScript("OnLeave", function()
-        if not exportButton:IsEnabled() then
-            GameTooltip:Hide()
-        end
-    end)
-
     local createButton = CreateFrame("Button", nil, bottomBarButtonFrame, "UIPanelButtonTemplate")
-    createButton:SetPoint("LEFT", exportButton, "RIGHT", 10, 0)
+    createButton:SetPoint("LEFT", exportButton, "RIGHT", 8, 0)
     createButton:SetSize(importButton:GetWidth(), importButton:GetHeight())
     createButton:SetText("Create")
     createButton:SetScript("OnClick", function()
         addon.CreateUI:ToggleCreate(self.selectedInstanceId)
     end)
+
+    local editButton = CreateFrame("Button", nil, bottomBarButtonFrame, "UIPanelButtonTemplate")
+    editButton:SetPoint("LEFT", createButton, "RIGHT", 8, 0)
+    editButton:SetSize(importButton:GetWidth(), importButton:GetHeight())
+    editButton:SetText("Edit")
+    editButton:SetScript("OnClick", function()
+        local runIndex = addon.RunHistory:GetComparisonRunIndex(self.selectedInstanceId)
+        addon.CreateUI:ToggleEdit(self.selectedInstanceId, runIndex)
+    end)
+    AddDisabledButtonTooltip(editButton, "Click on a run to edit first")
+    self.editButton = editButton
 
     local deleteModeButton = CreateFrame("Button", nil, bottomBarButtonFrame, "UIPanelButtonTemplate")
     deleteModeButton:SetPoint("RIGHT", bottomBarButtonFrame, "RIGHT", -10, 2)
