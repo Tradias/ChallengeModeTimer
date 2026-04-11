@@ -1,12 +1,5 @@
 local addonName, addon = ...
 
-local function HideBlizzardChallengeModeTimer()
-    if WatchFrame then
-        WatchFrame:SetScript("OnEvent", nil)
-        WatchFrame:Hide()
-    end
-end
-
 local function SelectCurrentInstanceInRunHistory()
     local dungeonName, instanceType, difficultyId, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceId =
         GetInstanceInfo()
@@ -79,7 +72,6 @@ local function InitializeAddon()
 
     ChallengeModeTimerDB.version = 1
 
-    HideBlizzardChallengeModeTimer()
     addon.Constants:Init()
     addon.RunHistory:Init()
     addon.RunUI:Init()

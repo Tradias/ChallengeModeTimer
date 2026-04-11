@@ -8,6 +8,26 @@ local g_runs = {}
 local g_currentRun = nil
 local g_currentInstanceId = 0
 local g_ticker = nil
+local g_watchFrameWasShown = nil
+local g_watchFrameScript = nil
+
+local function HideBlizzardChallengeModeTimer()
+    if WatchFrame then
+        g_watchFrameScript = WatchFrame:GetScript("OnEvent")
+        g_watchFrameWasShown = WatchFrame:IsShown()
+        WatchFrame:SetScript("OnEvent", nil)
+        WatchFrame:Hide()
+    end
+end
+
+local function RestoreBlizzardChallengeModeTimer()
+    if WatchFrame then
+        WatchFrame:SetScript("OnEvent", g_watchFrameScript)
+        if g_watchFrameWasShown then
+            WatchFrame:Show()
+        end
+    end
+end
 
 local function InitializeRuns()
     for instanceId, _ in pairs(addon.Dungeons:Get()) do
@@ -366,8 +386,10 @@ local function OnPlayerEnteringWorld(isInitialLogin, isReloadUI)
         else
             addon.RunUI:Hide()
         end
+        RestoreBlizzardChallengeModeTimer()
         return
     end
+    HideBlizzardChallengeModeTimer()
     ChangeRunning(run, false)
     if isReloadUI and InActiveChallengeMode() then
         StartTimerCalibration(run)
