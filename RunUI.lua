@@ -178,7 +178,10 @@ local function BuildSplitDifferenceTextAndColor(split, comparisonSplit)
 end
 
 local function BuildSplitDurationText(split, comparisonSplit)
-    if split.completed and split.duration ~= 0 then
+    if split.completed then
+        if split.duration == 0 then
+            return "-"
+        end
         return addon.Utility:FormatTime(split.duration)
     end
     if comparisonSplit and comparisonSplit.completed and comparisonSplit.duration ~= 0 then

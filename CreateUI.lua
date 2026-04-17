@@ -263,10 +263,9 @@ function addon.CreateUI:ToggleEdit(instanceId, runIndex)
     run = addon.Utility:DeepCopy(run)
 
     for index, split in ipairs(run.splits) do
-        local splitDuration = split.duration
-        if splitDuration ~= 0 then
+        if split.completed then
             local line = self.editSplitLines[index]
-            line.editBox:SetText(addon.Utility:FormatTime(splitDuration, 3))
+            line.editBox:SetText(addon.Utility:FormatTime(split.duration, 3))
         end
     end
     FocusFirstEmptyEditBox(self.editSplitLines)
