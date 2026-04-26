@@ -16,30 +16,8 @@ local function EnsureUIIsInitialized()
     addon.AppearanceUI:Init()
 end
 
-local function OnSlashCommand(msg)
+local function OnSlashCommand()
     EnsureUIIsInitialized()
-
-    msg = strtrim(msg):lower()
-
-    if msg == "history" then
-        addon.RunHistory:InsertSampleRuns()
-        return
-    elseif msg == "test" then
-        addon.Run:SetSampleRun()
-        addon.RunUI:Show()
-        return
-    elseif msg == "debug" then
-        addon.Utility:ToggleDebugMode()
-        return
-    elseif msg ~= "" then
-        local number = tonumber(msg)
-        if number then
-            addon.Run:SetSampleRun(number)
-            addon.RunUI:Show()
-            return
-        end
-    end
-
     if addon.OptionsUI.optionsFrame:IsShown() then
         addon.OptionsUI:Hide()
     else
@@ -59,7 +37,7 @@ local function RegisterInterfaceOptions()
     fontObject:SetFont(addon.Constants.FONT, 32, "")
     button:SetNormalFontObject(fontObject)
     button:SetHighlightFontObject(fontObject)
-    button:SetScript("OnClick", function() OnSlashCommand("") end)
+    button:SetScript("OnClick", function() OnSlashCommand() end)
 
     local category = Settings.RegisterCanvasLayoutCategory(panel, addonName)
     Settings.RegisterAddOnCategory(category)

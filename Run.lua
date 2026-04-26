@@ -200,18 +200,6 @@ local function UpdateSplit(run, split, splitDefinition)
     if not criteriaInfo then
         return isUpdated
     end
-    addon.Utility:DebugPrint("split completed: " .. tostring(split.completed) .. " criteriaID: " ..
-        criteriaInfo.criteriaID ..
-        " completed: " ..
-        tostring(criteriaInfo.completed) ..
-        " elapsed: " ..
-        criteriaInfo.elapsed ..
-        "s/" ..
-        WoWGetWorldElapsedTime() ..
-        "s " ..
-        criteriaInfo.quantity ..
-        "/" ..
-        criteriaInfo.totalQuantity .. " run.state.isStartTimeAccurate: " .. tostring(run.state.isStartTimeAccurate))
     if split.quantity < criteriaInfo.quantity then
         isUpdated = true
         split.quantity = criteriaInfo.quantity
@@ -361,7 +349,6 @@ end
 
 local function OnChallengeModeCompleted()
     local challengeCompletionInfo = C_ChallengeMode.GetChallengeCompletionInfo()
-    addon.Utility:DebugPrint(challengeCompletionInfo)
     local instanceId = addon.Dungeons:GetInstanceIdByChallengeModeMapId(challengeCompletionInfo.mapChallengeModeID)
     if not instanceId then
         return
@@ -418,8 +405,6 @@ local function OnScenarioCriteriaUpdate(criteriaId)
     local dungeonName, instanceType, difficultyId, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceId =
         GetInstanceInfo()
     g_currentInstanceId = instanceId
-    addon.Utility:DebugPrint("OnScenarioCriteriaUpdate, criteriaId: " .. criteriaId .. " scenario type: " ..
-        select(10, C_Scenario.GetInfo()) .. " elapsed: " .. WoWGetWorldElapsedTime())
     if InChallengeMode() and UpdateCriteriaSplit(criteriaId) then
         addon.RunUI:UpdateSplits()
     end
