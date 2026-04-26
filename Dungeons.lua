@@ -114,7 +114,7 @@ for _, dungeon in pairs(CHALLENGE_MODE_DUNGEONS) do
 end
 
 local MEDAL_LABELS = {
-    "Title?",
+    "Title",
     "Plat",
     "Gold",
     "Silver",
