@@ -9,6 +9,7 @@ Challenge Mode timer that measures time to complete each objective and keeps a r
 * Live comparison with previous runs
 * Run history
 * Share run in chat
+* Export/Import runs
 
 # Quick Start
 

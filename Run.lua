@@ -1,7 +1,5 @@
 local _, addon = ...
 
-LoadAddOn("Blizzard_DebugTools")
-
 addon.Run = addon.Run or {}
 
 local g_runs = {}
@@ -243,7 +241,9 @@ local function UpdatePendingSplits(run)
     run.state.pendingSplitUpdateIndices = {}
     for _, splitUpdateIndex in ipairs(pendingSplitUpdateIndices) do
         local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(splitUpdateIndex)
-        UpdateSplitDuration(run, run.splits[splitUpdateIndex], criteriaInfo)
+        if criteriaInfo then
+            UpdateSplitDuration(run, run.splits[splitUpdateIndex], criteriaInfo)
+        end
     end
     if needsUIUpdate then
         addon.RunUI:UpdateSplits()
@@ -454,7 +454,6 @@ function addon.Run:Init()
         eventFrame:RegisterEvent(key)
     end
     eventFrame:SetScript("OnEvent", function(_, event, ...)
-        addon.Utility:DebugPrint(event)
         EVENTS[event](...)
     end)
 end
