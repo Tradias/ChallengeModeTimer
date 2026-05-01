@@ -139,6 +139,7 @@ local MEDAL_COLORS = {
     { 1,    1,    1 },    -- no medal
 }
 
+local TITLE_INDEX = 1
 local NO_MEDAL_INDEX = 6
 
 local KEYSTONE_UPGRADE_LEVEL_TO_MEDAL_INDEX = {
@@ -185,9 +186,9 @@ end
 function addon.Dungeons:GetMedalIndexByDurationOrKeystoneUpgradeLevel(instanceId, runDuration, keystoneUpgradeLevels)
     local dungeon = CHALLENGE_MODE_DUNGEONS[instanceId]
     if runDuration < dungeon.medals[1] then
-        return 1
+        return TITLE_INDEX
     end
-    return KEYSTONE_UPGRADE_LEVEL_TO_MEDAL_INDEX[keystoneUpgradeLevels]
+    return KEYSTONE_UPGRADE_LEVEL_TO_MEDAL_INDEX[keystoneUpgradeLevels] or TITLE_INDEX
 end
 
 function addon.Dungeons:GetMedalLabelByIndex(medalIndex)
