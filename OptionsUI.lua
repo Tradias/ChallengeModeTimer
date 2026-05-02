@@ -7,6 +7,7 @@ function addon.OptionsUI:Init()
     optionsFrame:SetSize(515, 572)
     optionsFrame:SetPoint("CENTER")
     optionsFrame:SetFrameStrata("DIALOG")
+    optionsFrame:SetFrameLevel(100)
     optionsFrame:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",

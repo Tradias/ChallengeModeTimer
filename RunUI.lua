@@ -431,7 +431,7 @@ function addon.RunUI:UpdateSplits()
     local splitProfile = addon.SplitProfile:Get(run.state.instanceId)
 
     local lineHeight = 20
-    local distanceFromTimer = 6
+    local distanceFromTimer = 7
     local labelXOffset = GetSplitLabelXOffset()
     local durationXOffset = GetSplitDurationXOffset()
     local comparisonXOffset = GetSplitComparisonXOffset()

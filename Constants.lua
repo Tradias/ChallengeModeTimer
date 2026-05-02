@@ -7,9 +7,9 @@ addon.LST = LibStub("ScrollingTable")
 addon.LSM = LibStub("LibSharedMedia-3.0")
 
 function addon.Constants:Init()
-    addon.Constants.FONT = addon.LSM:Fetch("font", "2002") or "Fonts\\2002.TTF"
+    addon.Constants.FONT = "Interface\\Addons\\ChallengeModeTimer\\Media\\Fonts\\DejaVuLGCSans.ttf"
     local fontObject = CreateFont("ChallengeModeTimerDropdownFontObject")
-    fontObject:SetFont(addon.Constants.FONT, 12, "")
+    fontObject:SetFont(addon.Constants.FONT, 13, "")
     addon.Constants.FONT_OBJECT = fontObject
 end
 
