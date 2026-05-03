@@ -2,6 +2,81 @@ local _, addon = ...
 
 addon.Utility = addon.Utility or {}
 
+local CHARACTER_WIDTH = {
+    [string.byte(" ")] = 2,
+    [string.byte("(")] = 2,
+    [string.byte(")")] = 2,
+    [string.byte("-")] = 2,
+    [string.byte(".")] = 1,
+    [string.byte("'")] = 1,
+    [string.byte("0")] = 2,
+    [string.byte("1")] = 2,
+    [string.byte("2")] = 2,
+    [string.byte("3")] = 2,
+    [string.byte("4")] = 2,
+    [string.byte("5")] = 2,
+    [string.byte("6")] = 2,
+    [string.byte("7")] = 2,
+    [string.byte("8")] = 2,
+    [string.byte("9")] = 2,
+    [string.byte("a")] = 2,
+    [string.byte("b")] = 2,
+    [string.byte("c")] = 2,
+    [string.byte("d")] = 2,
+    [string.byte("e")] = 2,
+    [string.byte("f")] = 1,
+    [string.byte("g")] = 2,
+    [string.byte("h")] = 2,
+    [string.byte("i")] = 1,
+    [string.byte("j")] = 1,
+    [string.byte("k")] = 2,
+    [string.byte("l")] = 1,
+    [string.byte("m")] = 3,
+    [string.byte("n")] = 2,
+    [string.byte("o")] = 2,
+    [string.byte("p")] = 2,
+    [string.byte("q")] = 2,
+    [string.byte("r")] = 2,
+    [string.byte("s")] = 2,
+    [string.byte("t")] = 1,
+    [string.byte("u")] = 2,
+    [string.byte("v")] = 2,
+    [string.byte("w")] = 3,
+    [string.byte("x")] = 2,
+    [string.byte("y")] = 2,
+    [string.byte("z")] = 2,
+    [string.byte("A")] = 2,
+    [string.byte("B")] = 2,
+    [string.byte("C")] = 2,
+    [string.byte("D")] = 2,
+    [string.byte("E")] = 2,
+    [string.byte("F")] = 2,
+    [string.byte("G")] = 2,
+    [string.byte("H")] = 2,
+    [string.byte("I")] = 1,
+    [string.byte("J")] = 2,
+    [string.byte("K")] = 2,
+    [string.byte("L")] = 2,
+    [string.byte("M")] = 3,
+    [string.byte("N")] = 2,
+    [string.byte("O")] = 2,
+    [string.byte("P")] = 2,
+    [string.byte("Q")] = 2,
+    [string.byte("R")] = 2,
+    [string.byte("S")] = 2,
+    [string.byte("T")] = 2,
+    [string.byte("U")] = 2,
+    [string.byte("V")] = 2,
+    [string.byte("W")] = 3,
+    [string.byte("X")] = 2,
+    [string.byte("Y")] = 2,
+    [string.byte("Z")] = 2,
+}
+
+local function GetCharacterWidthAt(text, i)
+    return CHARACTER_WIDTH[string.byte(text, i)]
+end
+
 function addon.Utility:FormatTime(seconds, precision)
     local minutes = math.floor(seconds / 60)
     local secs = math.floor(seconds % 60)
@@ -67,4 +142,23 @@ function addon.Utility:CreateScrollableEditBox(frame)
     end)
 
     return scrollFrame, editBox
+end
+
+function addon.Utility:GetTextWidth(text)
+    local width = 0
+    for i = 1, #text do
+        width = width + GetCharacterWidthAt(text, i)
+    end
+    return width
+end
+
+function addon.Utility:ShortenTextToWidth(text, targetWidth)
+    local textWidth = addon.Utility:GetTextWidth(text)
+    for i = #text, 0, -1 do
+        textWidth = textWidth - GetCharacterWidthAt(text, i)
+        if textWidth <= targetWidth then
+            return string.sub(text, 1, i)
+        end
+    end
+    return ""
 end

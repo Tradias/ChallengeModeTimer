@@ -273,6 +273,23 @@ local function CompleteFinalSplit(run)
     end
 end
 
+local function UpdateEncounterStartTime(encounterId)
+    local run = g_runs[g_currentInstanceId]
+    if not run.state.isStartTimeAccurate then
+        return
+    end
+    local splitProfile = addon.SplitProfile:Get(g_currentInstanceId)
+    for index, splitDefinition in ipairs(splitProfile.splits) do
+        if splitDefinition.encounterId and splitDefinition.encounterId == encounterId then
+            local split = run.splits[index]
+            if split.startDuration then
+                return
+            end
+            split.startDuration = addon.Utility:RoundDuration(GetTime() - run.state.startTime)
+        end
+    end
+end
+
 local function OnRunStart(run, worldElapsedTime)
     run.state.active = true
     SetStartTime(run, GetTime() - worldElapsedTime)
@@ -420,6 +437,13 @@ local function OnWorldStateTimerStart()
     end
 end
 
+local function OnEncounterStart(encounterId, _, difficultyId)
+    if difficultyId ~= addon.Dungeons.CHALLENGE_MODE_DIFFICULTY_ID then
+        return
+    end
+    UpdateEncounterStartTime(encounterId)
+end
+
 -- Public API
 
 function addon.Run:Init()
@@ -432,6 +456,7 @@ function addon.Run:Init()
         ["PLAYER_LEAVING_WORLD"] = OnPlayerLeavingWorld,
         ["SCENARIO_CRITERIA_UPDATE"] = OnScenarioCriteriaUpdate,
         ["WORLD_STATE_TIMER_START"] = OnWorldStateTimerStart,
+        ["ENCOUNTER_START"] = OnEncounterStart,
     }
 
     local eventFrame = CreateFrame("Frame")
@@ -479,6 +504,9 @@ function addon.Run:CreateSampleRun(instanceId, totalTime, completed, secondsAgo)
             split.completed = true
             split.duration = addon.Utility:RoundDuration(totalTime * (index / splitCount))
             split.quantity = totalQuantity
+            if not addon.SplitProfile:IsEnemyCount(splitDefinition) then
+                split.startDuration = split.duration - 12.3
+            end
         else
             split.completed = false
             split.duration = 0

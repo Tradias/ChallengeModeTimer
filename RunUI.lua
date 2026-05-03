@@ -450,6 +450,7 @@ function addon.RunUI:UpdateSplits()
             label:SetWidth(220)
             label:SetJustifyH(labelJustifyH)
             label:SetFont(addon.Constants.FONT, 14, "OUTLINE")
+            label:SetWordWrap(false)
 
             local duration = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             duration:SetPoint("CENTER", lineFrame, "CENTER", durationXOffset, 0)
@@ -457,12 +458,14 @@ function addon.RunUI:UpdateSplits()
             duration:SetJustifyH(durationJustifyH)
             duration:SetFont(addon.Constants.FONT, 14, "OUTLINE")
             duration:SetTextColor(1, 1, 1, 1)
+            duration:SetWordWrap(false)
 
             local comparison = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             comparison:SetPoint("CENTER", lineFrame, "CENTER", comparisonXOffset, 0)
             comparison:SetWidth(120)
             comparison:SetJustifyH(comparisonJustifyH)
             comparison:SetFont(addon.Constants.FONT, 14, "OUTLINE")
+            comparison:SetWordWrap(false)
 
             line = {
                 frame = lineFrame,
@@ -474,7 +477,7 @@ function addon.RunUI:UpdateSplits()
         end
 
         local splitDefinition = splitProfile.splits[index]
-        line.label:SetText(addon.SplitProfile:FormatSplitLabel(split, splitDefinition))
+        line.label:SetText(addon.SplitProfile:FormatAbbreviatedSplitLabel(split, splitDefinition))
         if split.completed then
             line.label:SetTextColor(0.2, 1, 0.2, 1)
         else
