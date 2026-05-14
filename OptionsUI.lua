@@ -36,9 +36,15 @@ function addon.OptionsUI:Init()
     optionsFrame:Hide()
 
     local closeHint = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    closeHint:SetPoint("TOPRIGHT", optionsFrame, "TOPRIGHT", -18, -12)
+    closeHint:SetPoint("TOPRIGHT", optionsFrame, "TOPRIGHT", -58, -15)
     closeHint:SetText("right-click to close")
     closeHint:SetTextColor(0.7, 0.7, 0.7, 1)
+    
+    local closeButton = CreateFrame("Button", nil, optionsFrame, "UIPanelCloseButton")
+    closeButton:SetPoint("TOPRIGHT", optionsFrame, "TOPRIGHT", -4, -4)
+    closeButton:SetScript("OnClick", function()
+        addon.OptionsUI:Hide()
+    end)
 
     self.optionsFrame = optionsFrame
 
