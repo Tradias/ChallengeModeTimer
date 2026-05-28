@@ -332,8 +332,7 @@ local function OnRunEnd(run, challengeCompletionInfo)
     if challengeCompletionInfo then
         run.completed = true
         run.duration = challengeCompletionInfo.time / 1000
-        run.medalIndex = addon.Dungeons:GetMedalIndexByDurationOrKeystoneUpgradeLevel(instanceId, run.duration,
-            challengeCompletionInfo.keystoneUpgradeLevels)
+        run.medalIndex = addon.Dungeons:GetMedalIndexByDuration(instanceId, run.duration)
         run.runners = BuildRunnersFromChallengeCompletionInfo(challengeCompletionInfo)
         CompleteFinalSplit(run)
     end

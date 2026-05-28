@@ -139,16 +139,7 @@ local MEDAL_COLORS = {
     { 1,    1,    1 },    -- no medal
 }
 
-local TITLE_INDEX = 1
 local NO_MEDAL_INDEX = 6
-
-local KEYSTONE_UPGRADE_LEVEL_TO_MEDAL_INDEX = {
-    [4] = 2,
-    [3] = 3,
-    [2] = 4,
-    [1] = 5,
-    [0] = NO_MEDAL_INDEX,
-}
 
 local MAP_CHALLENGE_MODE_ID_TO_INSTANCE_ID = {
     [2] = 960,   -- Temple of the Jade Serpent
@@ -181,14 +172,6 @@ function addon.Dungeons:GetMedalIndexByDuration(instanceId, runDuration)
         end
     end
     return NO_MEDAL_INDEX
-end
-
-function addon.Dungeons:GetMedalIndexByDurationOrKeystoneUpgradeLevel(instanceId, runDuration, keystoneUpgradeLevels)
-    local dungeon = CHALLENGE_MODE_DUNGEONS[instanceId]
-    if runDuration < dungeon.medals[1] then
-        return TITLE_INDEX
-    end
-    return KEYSTONE_UPGRADE_LEVEL_TO_MEDAL_INDEX[keystoneUpgradeLevels] or TITLE_INDEX
 end
 
 function addon.Dungeons:GetMedalLabelByIndex(medalIndex)
