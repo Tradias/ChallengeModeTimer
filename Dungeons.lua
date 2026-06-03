@@ -7,7 +7,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [960] = {
         name = "Temple of the Jade Serpent",
         medals = {
-            480,  -- title 8:00
+            480,  -- diamond 8:00
             615,  -- platinum 10:15
             900,  -- gold 15:00
             1500, -- silver 25:00
@@ -17,7 +17,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [961] = {
         name = "Stormstout Brewery",
         medals = {
-            375,  -- title 6:15
+            375,  -- diamond 6:15
             495,  -- platinum 8:15
             720,  -- gold 12:00
             1260, -- silver 21:00
@@ -27,7 +27,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [962] = {
         name = "Gate of the Setting Sun",
         medals = {
-            315,  -- title 5:15
+            315,  -- diamond 5:15
             480,  -- platinum 8:00
             780,  -- gold 13:00
             1320, -- silver 22:00
@@ -37,7 +37,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [959] = {
         name = "Shado-Pan Monastery",
         medals = {
-            600,  -- title 10:00
+            600,  -- diamond 10:00
             840,  -- platinum 14:00
             1260, -- gold 21:00
             2100, -- silver 35:00
@@ -47,7 +47,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [1011] = {
         name = "Siege of Niuzao Temple",
         medals = {
-            585,  -- title 9:45
+            585,  -- diamond 9:45
             735,  -- platinum 12:15
             1050, -- gold 17:30
             1800, -- silver 30:00
@@ -57,7 +57,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [994] = {
         name = "Mogu'shan Palace",
         medals = {
-            380,  -- title 6:20
+            380,  -- diamond 6:20
             495,  -- platinum 8:15
             720,  -- gold 12:00
             1440, -- silver 24:00
@@ -67,7 +67,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [1007] = {
         name = "Scholomance",
         medals = {
-            405,  -- title 6:45
+            405,  -- diamond 6:45
             615,  -- platinum 10:15
             1140, -- gold 19:00
             1980, -- silver 33:00
@@ -77,7 +77,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [1001] = {
         name = "Scarlet Halls",
         medals = {
-            240,  -- title 4:00
+            240,  -- diamond 4:00
             480,  -- platinum 8:00
             780,  -- gold 13:00
             1320, -- silver 22:00
@@ -87,7 +87,7 @@ local CHALLENGE_MODE_DUNGEONS = {
     [1004] = {
         name = "Scarlet Monastery",
         medals = {
-            315,  -- title 5:15
+            315,  -- diamond 5:15
             540,  -- platinum 9:00
             780,  -- gold 13:00
             1320, -- silver 22:00
@@ -114,7 +114,7 @@ for _, dungeon in pairs(CHALLENGE_MODE_DUNGEONS) do
 end
 
 local MEDAL_LABELS = {
-    "Title",
+    "Diamond",
     "Plat",
     "Gold",
     "Silver",
@@ -122,21 +122,19 @@ local MEDAL_LABELS = {
     "No Medal"
 }
 
-local MEDAL_LABELS_LOWERCASE = {
-    ["title"] = true
-}
+local MEDAL_LABELS_LOWERCASE = {}
 
 for _, label in ipairs(MEDAL_LABELS) do
     MEDAL_LABELS_LOWERCASE[string.lower(label)] = true
 end
 
 local MEDAL_COLORS = {
-    { 0.3,  0.8,  1 },    -- title
-    { 0.9,  0.9,  1 },    -- platinum
-    { 1,    0.82, 0 },    -- gold
-    { 0.85, 0.85, 0.85 }, -- silver
-    { 0.8,  0.55, 0.25 }, -- bronze
-    { 1,    1,    1 },    -- no medal
+    { 0.25,  1,     1 },       -- diamond
+    { 0.921, 0.906, 0.882 },   -- platinum
+    { 1,     0.923, 0.367 },   -- gold
+    { 0.82,  0.758, 0.781 },   -- silver
+    { 0.898, 0.578, 0.230 },   -- bronze
+    { 1,     1,     1 },       -- no medal
 }
 
 local NO_MEDAL_INDEX = 6
