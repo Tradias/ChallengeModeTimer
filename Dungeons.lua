@@ -128,6 +128,15 @@ for _, label in ipairs(MEDAL_LABELS) do
     MEDAL_LABELS_LOWERCASE[string.lower(label)] = true
 end
 
+local MEDAL_LABELS_SHORT = {
+    "Dia",
+    "Plat",
+    "Gold",
+    "Silver",
+    "Bronze",
+    "None"
+}
+
 local MEDAL_COLORS = {
     { 0.25,  1,     1 },       -- diamond
     { 0.921, 0.906, 0.882 },   -- platinum
@@ -182,7 +191,7 @@ end
 
 function addon.Dungeons:GetMedalInfoByDuration(instanceId, runDuration)
     local medalIndex = addon.Dungeons:GetMedalIndexByDuration(instanceId, runDuration)
-    local label = MEDAL_LABELS[medalIndex]
+    local label = MEDAL_LABELS_SHORT[medalIndex]
     local color = MEDAL_COLORS[medalIndex]
     local dungeon = CHALLENGE_MODE_DUNGEONS[instanceId]
     local timeText = dungeon.formattedMedalTimes[medalIndex]
