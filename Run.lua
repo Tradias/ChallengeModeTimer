@@ -7,6 +7,7 @@ local g_currentRun = nil
 local g_currentInstanceId = 0
 local g_ticker = nil
 local g_watchFrameWasShown = nil
+local g_delayedPlayerEnteringTimer = nil
 
 local function HideBlizzardChallengeModeTimer()
     if WatchFrame then
@@ -349,6 +350,29 @@ local function MaybeEndRun(run, challengeCompletionInfo)
     end
 end
 
+
+local function OnDelayedPlayerEnteringWorld()
+    local _, _, difficultyId = GetInstanceInfo()
+    if difficultyId ~= addon.Dungeons.CHALLENGE_MODE_DIFFICULTY_ID then
+        addon.RunUI:Hide()
+        RestoreBlizzardChallengeModeTimer()
+    end
+end
+
+local function StartDelayedPlayerEnteringWorld()
+    if g_delayedPlayerEnteringTimer then
+        g_delayedPlayerEnteringTimer:Cancel()
+    end
+    g_delayedPlayerEnteringTimer = C_Timer.NewTimer(1.5, OnDelayedPlayerEnteringWorld)
+end
+
+local function CancelDelayedPlayerEnteringWorld()
+    if g_delayedPlayerEnteringTimer then
+        g_delayedPlayerEnteringTimer:Cancel()
+        g_delayedPlayerEnteringTimer = nil
+    end
+end
+
 -- ============================================================================
 -- EVENT HANDLING
 -- ============================================================================
@@ -392,6 +416,7 @@ local function OnPlayerEnteringWorld(isInitialLogin, isReloadUI)
         end
         return
     end
+    StoreBlizzardChallengeModeTimer()
     HideBlizzardChallengeModeTimer()
     ChangeRunning(run, false)
     if isReloadUI and InActiveChallengeMode() then
@@ -399,17 +424,17 @@ local function OnPlayerEnteringWorld(isInitialLogin, isReloadUI)
     else
         SetCurrentIfActiveOrPreviousRun(run)
         addon.RunUI:Show()
+        StartDelayedPlayerEnteringWorld()
     end
 end
 
 local function OnPlayerLeavingWorld()
+    CancelDelayedPlayerEnteringWorld()
     local run = g_runs[g_currentInstanceId]
     if run then
         run.state.isStartTimeAccurate = false
         addon.RunHistory:UpdateCurrentRun(addon.Utility:DeepCopy(run))
         RestoreBlizzardChallengeModeTimer()
-    else
-        StoreBlizzardChallengeModeTimer()
     end
 end
 
