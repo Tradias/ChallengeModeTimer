@@ -51,7 +51,7 @@ local DEFAULT_SPLIT_PROFILES = {
     [994] = { -- Mogu'shan Palace
         splits = {
             { name = "Trial of the King",    criteriaIndex = 1, criteriaId = 20674, totalQuantity = 1, encounterId = 1442 },
-            { name = "Gekkan",               criteriaIndex = 2, criteriaId = 20887, totalQuantity = 1, encounterId = 2129 },
+            { name = "Gekkan",               criteriaIndex = 2, criteriaId = 20887, totalQuantity = 1, encounterId = 1509 },
             { name = "Xin the Weaponmaster", criteriaIndex = 3, criteriaId = 19257, totalQuantity = 1, encounterId = 1441 },
             { name = "Enemies",              criteriaIndex = 4, criteriaId = 0,     totalQuantity = 20 }
         }
