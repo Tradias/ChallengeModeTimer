@@ -80,11 +80,11 @@ end
 function addon.Utility:FormatTime(seconds, precision)
     local minutes = math.floor(seconds / 60)
     local secs = math.floor(seconds % 60)
-    local tenths = math.floor((seconds % 1) * 10)
+    local tenths = math.floor((seconds % 1) * 10 + 0.00005)
     local tenthsFormatString = "%01d"
     if precision then
         local thousands = math.pow(10, precision)
-        tenths = math.floor((seconds % 1) * thousands + 0.5 / thousands)
+        tenths = math.floor((seconds % 1) * thousands + 0.00005)
         tenthsFormatString = string.format("%%0%dd", precision)
     end
     if minutes == 0 then
