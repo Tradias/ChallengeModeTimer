@@ -41,7 +41,7 @@ local CHALLENGE_MODE_DUNGEONS = {
             840,  -- platinum 14:00
             1260, -- gold 21:00
             2100, -- silver 35:00
-            3599  -- bronze 59:59
+            3600  -- bronze 60:00
         },
     },
     [1011] = {
