@@ -1,3 +1,22 @@
+---@class ChallengeModeTimerAddon
+---@field AppearanceUI AppearanceUIModule
+---@field Constants ConstantsModule
+---@field CreateUI CreateUIModule
+---@field Dungeons DungeonsModule
+---@field ImportExport ImportExportModule
+---@field ImportExportUI ImportExportUIModule
+---@field LSM table
+---@field LST table
+---@field OptionsUI OptionsUIModule
+---@field PopupUI PopupUIModule
+---@field Run RunModule
+---@field RunHistory RunHistoryModule
+---@field RunHistoryUI RunHistoryUIModule
+---@field RunUI RunUIModule
+---@field SplitProfile SplitProfileModule
+---@field Utility UtilityModule
+
+---@type string, ChallengeModeTimerAddon
 local addonName, addon = ...
 
 local function SelectCurrentInstanceInRunHistory()

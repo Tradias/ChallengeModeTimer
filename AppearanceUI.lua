@@ -1,5 +1,7 @@
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class AppearanceUIModule
 addon.AppearanceUI = addon.AppearanceUI or {}
 
 local function CreateSlider(parentFrame)

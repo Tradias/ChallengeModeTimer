@@ -1,7 +1,26 @@
+---@class SplitDefinition
+---@field name string
+---@field criteriaIndex integer
+---@field criteriaId integer
+---@field totalQuantity integer
+---@field encounterId integer?
+
+---@class SplitProfile
+---@field splits SplitDefinition[]
+
+---@class Split
+---@field completed boolean
+---@field duration integer
+---@field quantity integer
+---@field startDuration integer?
+
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class SplitProfileModule
 addon.SplitProfile = addon.SplitProfile or {}
 
+---@type table<integer, SplitProfile>
 local DEFAULT_SPLIT_PROFILES = {
     [960] = { -- Temple of the Jade Serpent
         splits = {
@@ -96,6 +115,10 @@ end
 
 local DOT_DOT_DOT_WIDTH = addon.Utility:GetTextWidth("...")
 
+---@param split Split
+---@param splitDefinition SplitDefinition
+---@param abbreviate boolean
+---@return string
 local function FormatSplitLabel(split, splitDefinition, abbreviate)
     local totalQuantity = splitDefinition.totalQuantity
     local currentQuantity = split.quantity
@@ -115,10 +138,13 @@ local function FormatSplitLabel(split, splitDefinition, abbreviate)
     return string.format("%d/%d %s%s", currentQuantity, totalQuantity, splitName, splitLength)
 end
 
+---@param instanceId integer
+---@return SplitProfile
 function addon.SplitProfile:Get(instanceId)
     return DEFAULT_SPLIT_PROFILES[instanceId]
 end
 
+---@return Split
 function addon.SplitProfile:CreateSplit()
     return {
         completed = false,
@@ -127,14 +153,22 @@ function addon.SplitProfile:CreateSplit()
     }
 end
 
+---@param splitDefinition SplitDefinition
+---@return boolean
 function addon.SplitProfile:IsEnemyCount(splitDefinition)
     return splitDefinition.criteriaId == 0
 end
 
+---@param split Split
+---@param splitDefinition SplitDefinition
+---@return string
 function addon.SplitProfile:FormatSplitLabel(split, splitDefinition)
     return FormatSplitLabel(split, splitDefinition, false)
 end
 
+---@param split Split
+---@param splitDefinition SplitDefinition
+---@return string
 function addon.SplitProfile:FormatAbbreviatedSplitLabel(split, splitDefinition)
     return FormatSplitLabel(split, splitDefinition, true)
 end

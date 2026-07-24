@@ -1,5 +1,7 @@
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class ConstantsModule
 addon.Constants = addon.Constants or {}
 
 addon.LST = LibStub("ScrollingTable")

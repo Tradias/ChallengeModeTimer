@@ -1,5 +1,7 @@
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class ImportExportUIModule
 addon.ImportExportUI = addon.ImportExportUI or {}
 
 local RUN_TOOLTIP_ANCHOR = "ANCHOR_TOP"
@@ -95,6 +97,8 @@ function addon.ImportExportUI:ToggleImport()
     self.importEditBox:SetFocus(true)
 end
 
+---@param instanceId integer
+---@param run Run
 function addon.ImportExportUI:ToggleExport(instanceId, run)
     self:Init()
     if self.exportFrame:IsShown() or not instanceId then

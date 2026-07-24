@@ -1,5 +1,7 @@
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class RunHistoryUIModule
 addon.RunHistoryUI = addon.RunHistoryUI or {}
 
 local MEDAL_COLUMN_INDEX = 3
@@ -752,6 +754,7 @@ function addon.RunHistoryUI:Refresh()
     SyncSelectionAndComparisonRun(self)
 end
 
+---@param instanceId integer
 function addon.RunHistoryUI:SetSelectedInstance(instanceId)
     local dungeon = addon.Dungeons:Get(instanceId)
     if not dungeon then
@@ -761,6 +764,10 @@ function addon.RunHistoryUI:SetSelectedInstance(instanceId)
     self:Refresh()
 end
 
+---@param frame Frame
+---@param instanceId integer
+---@param run Run
+---@param anchor string?
 function addon.RunHistoryUI:ShowRunTooltip(frame, instanceId, run, anchor)
     if not anchor then
         anchor = "ANCHOR_RIGHT"

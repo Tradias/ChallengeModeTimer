@@ -1,5 +1,7 @@
+---@type string, ChallengeModeTimerAddon
 local addonName, addon = ...
 
+---@class ImportExportModule
 addon.ImportExport = addon.ImportExport or {}
 
 local LibSerialize = LibStub("LibSerialize")
@@ -7,6 +9,9 @@ local LibDeflate = LibStub("LibDeflate")
 
 local SCHEMA_VERSION = 1
 
+---@param inTable table
+---@param forChat boolean
+---@return string
 local function TableToString(inTable, forChat)
     local serialized = LibSerialize:SerializeEx({ errorOnUnserializableType = false }, inTable)
     local compressed = LibDeflate:CompressDeflate(serialized, { level = 9 })
@@ -19,6 +24,10 @@ local function TableToString(inTable, forChat)
     return encoded
 end
 
+---@param inString string
+---@param fromChat boolean
+---@return string|table
+---@return integer?
 local function StringToTable(inString, fromChat)
     local _, _, schemaVersion, encoded = inString:find("^(!CMT:%d+!)(.+)$")
     if schemaVersion then
@@ -52,6 +61,9 @@ local function StringToTable(inString, fromChat)
     return deserialized, schemaVersion
 end
 
+---@param inString string
+---@return boolean
+---@return string|table
 function addon.ImportExport:ImportRun(inString)
     local deserialized, schemaVersion = StringToTable(inString, true)
     if not schemaVersion then
@@ -61,6 +73,9 @@ function addon.ImportExport:ImportRun(inString)
     return true, deserialized
 end
 
+---@param instanceId integer
+---@param run Run
+---@return string
 function addon.ImportExport:ExportRun(instanceId, run)
     local exported = {
         instanceId = instanceId,

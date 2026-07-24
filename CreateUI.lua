@@ -1,5 +1,7 @@
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class CreateUIModule
 addon.CreateUI = addon.CreateUI or {}
 
 local function ParseDuration(text)
@@ -214,10 +216,12 @@ function addon.CreateUI:Init()
     self.editButton = editButton
 
     self.editInstanceId = 0
+---@diagnostic disable-next-line: missing-fields
     self.editRun = {}
     self.editSplitLines = {}
 end
 
+---@param instanceId integer
 function addon.CreateUI:ToggleCreate(instanceId)
     self:Init()
     if self.createInstanceId == instanceId then
@@ -247,6 +251,8 @@ function addon.CreateUI:ToggleCreate(instanceId)
     end)
 end
 
+---@param instanceId integer
+---@param runIndex integer
 function addon.CreateUI:ToggleEdit(instanceId, runIndex)
     self:Init()
     local run = addon.RunHistory:GetRun(instanceId, runIndex)

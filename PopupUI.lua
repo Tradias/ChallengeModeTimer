@@ -1,5 +1,7 @@
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class PopupUIModule
 addon.PopupUI = addon.PopupUI or {}
 
 local g_popupFrames = {}

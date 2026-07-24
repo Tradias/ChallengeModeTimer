@@ -1,8 +1,17 @@
+---@class ChallengeModeDungeon
+---@field name string
+---@field medals integer[]
+---@field formattedMedalTimes string[]?
+
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class DungeonsModule
 addon.Dungeons = addon.Dungeons or {}
 
--- Challenge Mode dungeon info (Mists of Pandaria)
+---@alias ChallengeModeDungeons table<integer, ChallengeModeDungeon>
+
+---@type ChallengeModeDungeons
 local CHALLENGE_MODE_DUNGEONS = {
     [960] = {
         name = "Temple of the Jade Serpent",
@@ -122,6 +131,7 @@ local MEDAL_LABELS = {
     "No Medal"
 }
 
+---@type table<string,boolean>
 local MEDAL_LABELS_LOWERCASE = {}
 
 for _, label in ipairs(MEDAL_LABELS) do
@@ -137,6 +147,7 @@ local MEDAL_LABELS_SHORT = {
     "None"
 }
 
+---@type number[][]
 local MEDAL_COLORS = {
     { 0.25,  1,     1 },       -- diamond
     { 0.921, 0.906, 0.882 },   -- platinum
@@ -164,6 +175,8 @@ addon.Dungeons.INCOMPLETE_MEDAL_INDEX = 7
 
 addon.Dungeons.CHALLENGE_MODE_DIFFICULTY_ID = 8
 
+---@param instanceId integer?
+---@return ChallengeModeDungeon|ChallengeModeDungeons
 function addon.Dungeons:Get(instanceId)
     if instanceId then
         return CHALLENGE_MODE_DUNGEONS[instanceId]
@@ -171,6 +184,9 @@ function addon.Dungeons:Get(instanceId)
     return CHALLENGE_MODE_DUNGEONS
 end
 
+---@param instanceId integer
+---@param runDuration integer
+---@return integer
 function addon.Dungeons:GetMedalIndexByDuration(instanceId, runDuration)
     local dungeon = CHALLENGE_MODE_DUNGEONS[instanceId]
     for index, medalTime in ipairs(dungeon.medals) do
@@ -181,14 +197,21 @@ function addon.Dungeons:GetMedalIndexByDuration(instanceId, runDuration)
     return NO_MEDAL_INDEX
 end
 
+---@param medalIndex integer
+---@return string
 function addon.Dungeons:GetMedalLabelByIndex(medalIndex)
     return MEDAL_LABELS[medalIndex]
 end
 
+---@param medalIndex integer
+---@return number[]
 function addon.Dungeons:GetMedalColorByIndex(medalIndex)
     return MEDAL_COLORS[medalIndex]
 end
 
+---@param instanceId integer
+---@param runDuration integer
+---@return string, number[], string
 function addon.Dungeons:GetMedalInfoByDuration(instanceId, runDuration)
     local medalIndex = addon.Dungeons:GetMedalIndexByDuration(instanceId, runDuration)
     local label = MEDAL_LABELS_SHORT[medalIndex]
@@ -198,10 +221,14 @@ function addon.Dungeons:GetMedalInfoByDuration(instanceId, runDuration)
     return label, color, timeText
 end
 
+---@param text string
+---@return boolean
 function addon.Dungeons:IsMedalLabel(text)
     return not not MEDAL_LABELS_LOWERCASE[text]
 end
 
+---@param challengeModeMapId integer
+---@return integer
 function addon.Dungeons:GetInstanceIdByChallengeModeMapId(challengeModeMapId)
     return MAP_CHALLENGE_MODE_ID_TO_INSTANCE_ID[challengeModeMapId]
 end

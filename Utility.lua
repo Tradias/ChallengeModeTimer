@@ -1,5 +1,7 @@
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class UtilityModule
 addon.Utility = addon.Utility or {}
 
 local CHARACTER_WIDTH = {
@@ -77,6 +79,9 @@ local function GetCharacterWidthAt(text, i)
     return CHARACTER_WIDTH[string.byte(text, i)]
 end
 
+---@param seconds number
+---@param precision integer?
+---@return string
 function addon.Utility:FormatTime(seconds, precision)
     local minutes = math.floor(seconds / 60)
     local secs = math.floor(seconds % 60)
@@ -93,10 +98,15 @@ function addon.Utility:FormatTime(seconds, precision)
     return string.format("%d:%02d." .. tenthsFormatString, minutes, secs, tenths)
 end
 
+---@param seconds number
+---@return number
 function addon.Utility:RoundDuration(seconds)
     return math.floor(seconds * 1000 + 0.5) / 1000
 end
 
+---@generic T
+---@param obj T
+---@return T
 function addon.Utility:DeepCopy(obj)
     if type(obj) ~= 'table' then return obj end
     local res = {}
@@ -106,6 +116,8 @@ function addon.Utility:DeepCopy(obj)
     return res
 end
 
+---@param classId integer
+---@return colorRGB
 function addon.Utility:GetClassColorById(classId)
     local _, classToken = GetClassInfo(classId)
     return classToken and RAID_CLASS_COLORS and RAID_CLASS_COLORS[classToken]
@@ -144,6 +156,8 @@ function addon.Utility:CreateScrollableEditBox(frame)
     return scrollFrame, editBox
 end
 
+---@param text string
+---@return integer
 function addon.Utility:GetTextWidth(text)
     local width = 0
     for i = 1, #text do
@@ -152,6 +166,9 @@ function addon.Utility:GetTextWidth(text)
     return width
 end
 
+---@param text string
+---@param targetWidth integer
+---@return string
 function addon.Utility:ShortenTextToWidth(text, targetWidth)
     local textWidth = addon.Utility:GetTextWidth(text)
     for i = #text, 0, -1 do

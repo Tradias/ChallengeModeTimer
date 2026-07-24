@@ -1,12 +1,52 @@
+---@class RunState
+---@field active boolean
+---@field instanceId integer
+---@field isStartTimeAccurate boolean
+---@field lastSeenWorldElapsedTime number
+---@field pendingSplitUpdateIndices integer[]
+---@field running boolean
+---@field startTime number
+
+---@class Runner
+---@field classId number
+---@field name string
+
+---@class Run
+---@field comment string?
+---@field completed boolean
+---@field duration number
+---@field medalIndex integer?
+---@field runners Runner[]
+---@field splits Split[]
+---@field startTimestamp number
+
+---@class ActiveRun : Run
+---@field originalGetComparisonRun fun(integer): Run?
+---@field previousRun ActiveRun?
+---@field state RunState
+
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class RunModule
 addon.Run = addon.Run or {}
 
+---@type table<integer, ActiveRun>
 local g_runs = {}
+
+---@type ActiveRun?
 local g_currentRun = nil
+
+---@type integer
 local g_currentInstanceId = 0
+
+---@type FunctionContainer?
 local g_ticker = nil
-local g_watchFrameWasShown = nil
+
+---@type boolean
+local g_watchFrameWasShown = false
+
+---@type FunctionContainer?
 local g_delayedPlayerEnteringTimer = nil
 
 local function HideBlizzardChallengeModeTimer()
@@ -37,6 +77,7 @@ local function InitializeRuns()
     end
 end
 
+---@param run ActiveRun
 local function CreateRunSplits(run)
     run.splits = {}
     local splitProfile = addon.SplitProfile:Get(run.state.instanceId)
@@ -45,6 +86,8 @@ local function CreateRunSplits(run)
     end
 end
 
+---@param instanceId integer
+---@return RunState
 local function CreateRunState(instanceId)
     return {
         instanceId = instanceId,
@@ -73,15 +116,19 @@ local function WoWGetWorldElapsedTime()
     return worldElapsedTime
 end
 
+---@param run ActiveRun
 local function SetDurationFromNow(run)
     run.duration = addon.Utility:RoundDuration(GetTime() - run.state.startTime)
 end
 
+---@param run ActiveRun
+---@param startTime number
 local function SetStartTime(run, startTime)
     run.state.startTime = startTime
     SetDurationFromNow(run)
 end
 
+---@return Runner[]
 local function BuildRunners()
     local runners = {}
     for _, unit in ipairs({ "player", "party1", "party2", "party3", "party4" }) do
@@ -97,6 +144,8 @@ local function BuildRunners()
     return runners
 end
 
+---@param challengeCompletionInfo ChallengeCompletionInfo
+---@return Runner[]
 local function BuildRunnersFromChallengeCompletionInfo(challengeCompletionInfo)
     local playerName = UnitName("player")
     local _, playerClassId = UnitClassBase("player")
@@ -116,16 +165,19 @@ local function BuildRunnersFromChallengeCompletionInfo(challengeCompletionInfo)
     return runners
 end
 
+---@param run ActiveRun
 local function SetCurrentRun(run)
     g_currentRun = run
     addon.RunUI:SetRun(g_currentRun)
 end
 
+---@param run ActiveRun
 local function SetCurrentIfActiveOrPreviousRun(run)
     if run.state.active then
         SetCurrentRun(run)
         return
     end
+    ---@class ActiveRun
     local previousRun = addon.RunHistory:GetPreviousRun(run.state.instanceId)
     if previousRun then
         previousRun = addon.Utility:DeepCopy(previousRun)
@@ -143,16 +195,20 @@ local function CancelTicker()
     end
 end
 
+---@param run ActiveRun
 local function OnTimerTick(run)
     SetDurationFromNow(run)
     addon.RunUI:UpdateTimerText(run.duration)
 end
 
+---@param run ActiveRun
 local function StartTimer(run)
     OnTimerTick(run)
     g_ticker = C_Timer.NewTicker(0.1, (function() OnTimerTick(run) end))
 end
 
+---@param run ActiveRun
+---@param isRunning boolean
 local function ChangeRunning(run, isRunning)
     run.state.running = isRunning
     if isRunning then
@@ -162,6 +218,9 @@ local function ChangeRunning(run, isRunning)
     end
 end
 
+---@param run ActiveRun
+---@param index integer
+---@return boolean
 local function HasPendingSplitUpdate(run, index)
     for _, splitUpdateIndex in ipairs(run.state.pendingSplitUpdateIndices) do
         if splitUpdateIndex == index then
@@ -171,6 +230,8 @@ local function HasPendingSplitUpdate(run, index)
     return false
 end
 
+---@param run ActiveRun
+---@param index integer
 local function AddPendingSplitUpdate(run, index)
     if HasPendingSplitUpdate(run, index) then
         return
@@ -178,6 +239,7 @@ local function AddPendingSplitUpdate(run, index)
     table.insert(run.state.pendingSplitUpdateIndices, index)
 end
 
+---@param run Run
 local function HasOnlyOneIncompleteSplit(run)
     local count = 0
     for _, split in ipairs(run.splits) do
@@ -191,10 +253,16 @@ local function HasOnlyOneIncompleteSplit(run)
     return count == 1
 end
 
+---@param run ActiveRun
+---@param split Split
+---@param criteriaInfo ScenarioCriteriaInfo
 local function UpdateSplitDuration(run, split, criteriaInfo)
     split.duration = addon.Utility:RoundDuration(GetTime() - run.state.startTime - criteriaInfo.elapsed)
 end
 
+---@param run ActiveRun
+---@param split Split
+---@param splitDefinition SplitDefinition
 local function UpdateSplit(run, split, splitDefinition)
     local isUpdated = false
     local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(splitDefinition.criteriaIndex)
@@ -224,6 +292,7 @@ local function UpdateSplit(run, split, splitDefinition)
     return isUpdated
 end
 
+---@param run ActiveRun
 local function UpdatePendingSplits(run)
     local pendingSplitUpdateIndices = run.state.pendingSplitUpdateIndices
     local needsUIUpdate = #pendingSplitUpdateIndices > 0
@@ -239,6 +308,7 @@ local function UpdatePendingSplits(run)
     end
 end
 
+---@param criteriaId integer
 local function UpdateCriteriaSplit(criteriaId)
     local run = g_runs[g_currentInstanceId]
     local splitProfile = addon.SplitProfile:Get(g_currentInstanceId)
@@ -255,6 +325,7 @@ local function UpdateCriteriaSplit(criteriaId)
     return false
 end
 
+---@param run ActiveRun
 local function CompleteFinalSplit(run)
     -- Set duration of the final split but only if there is only one incomplete split
     local splitProfile = addon.SplitProfile:Get(run.state.instanceId)
@@ -274,6 +345,7 @@ local function CompleteFinalSplit(run)
     end
 end
 
+---@param encounterId integer
 local function UpdateEncounterStartTime(encounterId)
     local run = g_runs[g_currentInstanceId]
     if not run.state.isStartTimeAccurate then
@@ -291,6 +363,8 @@ local function UpdateEncounterStartTime(encounterId)
     end
 end
 
+---@param run ActiveRun
+---@param worldElapsedTime number
 local function OnRunStart(run, worldElapsedTime)
     run.state.active = true
     SetStartTime(run, GetTime() - worldElapsedTime)
@@ -302,6 +376,7 @@ local function OnRunStart(run, worldElapsedTime)
     addon.RunUI:Show()
 end
 
+---@param run ActiveRun
 local function OnTimerCalibrationTick(run)
     local _, worldElapsedTime, timerType = GetWorldElapsedTime(1)
     if timerType ~= LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE then
@@ -314,6 +389,7 @@ local function OnTimerCalibrationTick(run)
     end
 end
 
+---@param run ActiveRun
 local function StartTimerCalibration(run)
     SetCurrentRun(run)
     local worldElapsedTime = WoWGetWorldElapsedTime()
@@ -327,6 +403,8 @@ local function StartTimerCalibration(run)
     g_ticker = C_Timer.NewTicker(0.1, (function() OnTimerCalibrationTick(run) end))
 end
 
+---@param run ActiveRun
+---@param challengeCompletionInfo ChallengeCompletionInfo?
 local function OnRunEnd(run, challengeCompletionInfo)
     run.state.active = false
     local instanceId = run.state.instanceId
@@ -343,6 +421,8 @@ local function OnRunEnd(run, challengeCompletionInfo)
     SetCurrentIfActiveOrPreviousRun(nextRun)
 end
 
+---@param run ActiveRun
+---@param challengeCompletionInfo ChallengeCompletionInfo?
 local function MaybeEndRun(run, challengeCompletionInfo)
     ChangeRunning(run, false)
     if run.state.active then
@@ -492,6 +572,8 @@ function addon.Run:Init()
     end)
 end
 
+---@param instanceId integer
+---@return ActiveRun
 function addon.Run:CreateRun(instanceId)
     local run = {
         state = CreateRunState(instanceId),
@@ -505,6 +587,11 @@ function addon.Run:CreateRun(instanceId)
     return run
 end
 
+---@param instanceId integer
+---@param totalTime number
+---@param completed boolean
+---@param secondsAgo number
+---@return ActiveRun
 function addon.Run:CreateSampleRun(instanceId, totalTime, completed, secondsAgo)
     local run = self:CreateRun(instanceId)
     local splitProfile = addon.SplitProfile:Get(instanceId)
@@ -541,6 +628,7 @@ function addon.Run:CreateSampleRun(instanceId, totalTime, completed, secondsAgo)
     return run
 end
 
+---@param runTime number?
 function addon.Run:SetSampleRun(runTime)
     local instanceId = 1004
     if not runTime then

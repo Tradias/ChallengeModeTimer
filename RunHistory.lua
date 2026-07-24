@@ -1,7 +1,17 @@
+---@class RunHistory
+---@field comparisonRunIndex integer?
+---@field runs (Run|ActiveRun)[]
+
+---@alias RunHistories table<integer, RunHistory>
+
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class RunHistoryModule
 addon.RunHistory = addon.RunHistory or {}
 
+---@param instanceId integer
+---@return RunHistory
 local function GetRunHistory(instanceId)
     return ChallengeModeTimerDB.runHistory[instanceId]
 end
@@ -27,42 +37,46 @@ function addon.RunHistory:Init()
     end
 end
 
+---@param instanceId integer
+---@param index integer
+---@return Run
 function addon.RunHistory:GetRun(instanceId, index)
     local runs = GetRunHistory(instanceId).runs
     return runs[index]
 end
 
+---@param instanceId integer
+---@param run Run
+---@param index integer
 function addon.RunHistory:SetRun(instanceId, run, index)
     local runs = GetRunHistory(instanceId).runs
     runs[index] = run
 end
 
+---@param instanceId integer
+---@return ActiveRun
 function addon.RunHistory:GetCurrentRun(instanceId)
-    local runHistory = GetRunHistory(instanceId)
-    if not runHistory then
-        return nil
-    end
-    local runs = runHistory.runs
+    local runs = GetRunHistory(instanceId).runs
     return runs[#runs]
 end
 
+---@param instanceId integer
+---@return Run?
 function addon.RunHistory:GetPreviousRun(instanceId)
-    local runHistory = GetRunHistory(instanceId)
-    if not runHistory then
-        return nil
-    end
-    local runs = runHistory.runs
+    local runs = GetRunHistory(instanceId).runs
     if #runs > 1 then
         return runs[#runs - 1]
     end
 end
 
+---@param run ActiveRun
 function addon.RunHistory:UpdateCurrentRun(run)
     local instanceId = run.state.instanceId
     local runs = GetRunHistory(instanceId).runs
     runs[#runs] = run
 end
 
+---@param run ActiveRun
 function addon.RunHistory:PersistCurrentRun(run)
     -- Keep the most recently failed run, otherwise store only runs with at least one completed split
     local instanceId = run.state.instanceId
@@ -84,6 +98,8 @@ function addon.RunHistory:PersistCurrentRun(run)
     return nextRun
 end
 
+---@param instanceId integer
+---@return Run[], integer
 function addon.RunHistory:GetHistoricalRuns(instanceId)
     local runs = GetRunHistory(instanceId).runs
     if HasAtLeastOneCompletedSplit(runs[#runs]) then
@@ -95,6 +111,9 @@ function addon.RunHistory:GetHistoricalRuns(instanceId)
     return runs, #runs - 2
 end
 
+---@param instanceId integer
+---@param run Run|ActiveRun
+---@return integer
 function addon.RunHistory:AddRun(instanceId, run)
     local runs = GetRunHistory(instanceId).runs
     run.state = nil
@@ -102,6 +121,8 @@ function addon.RunHistory:AddRun(instanceId, run)
     return 1
 end
 
+---@param instanceId integer
+---@return Run?
 function addon.RunHistory:GetComparisonRun(instanceId)
     local runHistory = GetRunHistory(instanceId)
     local index = runHistory.comparisonRunIndex
@@ -110,16 +131,22 @@ function addon.RunHistory:GetComparisonRun(instanceId)
     end
 end
 
+---@param instanceId integer
+---@return integer?
 function addon.RunHistory:GetComparisonRunIndex(instanceId)
     return GetRunHistory(instanceId).comparisonRunIndex
 end
 
+---@param instanceId integer
+---@param index integer?
 function addon.RunHistory:SetComparisonRunIndex(instanceId, index)
     local runHistory = GetRunHistory(instanceId)
     runHistory.comparisonRunIndex = index
     addon.RunUI:UpdateSplits()
 end
 
+---@param instanceId integer
+---@param index integer
 function addon.RunHistory:DeleteRun(instanceId, index)
     local runHistory = GetRunHistory(instanceId)
     local runs = runHistory.runs

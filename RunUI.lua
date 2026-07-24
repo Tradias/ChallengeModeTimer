@@ -1,5 +1,7 @@
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class RunUIModule
 addon.RunUI = addon.RunUI or {}
 
 local RUN_UI_WIDTH = 300
@@ -502,6 +504,7 @@ function addon.RunUI:UpdateSplits()
     self.splitsFrame:SetHeight(#run.splits * lineHeight)
 end
 
+---@param run Run
 function addon.RunUI:SetRun(run)
     self.run = run
     self:UpdateSplits()

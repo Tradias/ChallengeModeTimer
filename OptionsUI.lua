@@ -1,5 +1,7 @@
+---@type string, ChallengeModeTimerAddon
 local _, addon = ...
 
+---@class OptionsUIModule
 addon.OptionsUI = addon.OptionsUI or {}
 
 function addon.OptionsUI:Init()
