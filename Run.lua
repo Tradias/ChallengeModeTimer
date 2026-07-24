@@ -283,7 +283,7 @@ local function UpdateEncounterStartTime(encounterId)
     for index, splitDefinition in ipairs(splitProfile.splits) do
         if splitDefinition.encounterId and splitDefinition.encounterId == encounterId then
             local split = run.splits[index]
-            if encounterId ~= 1428 or not split.startDuration then -- 1428 Rattlegore has encounter start event on death
+            if not split.completed and (encounterId ~= 1428 or not split.startDuration) then -- 1428 Rattlegore has encounter start event on death
                 split.startDuration = addon.Utility:RoundDuration(GetTime() - run.state.startTime)
             end
             return
