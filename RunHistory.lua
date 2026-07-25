@@ -39,14 +39,14 @@ end
 
 ---@param instanceId integer
 ---@param index integer
----@return Run
+---@return Run|ActiveRun
 function addon.RunHistory:GetRun(instanceId, index)
     local runs = GetRunHistory(instanceId).runs
     return runs[index]
 end
 
 ---@param instanceId integer
----@param run Run
+---@param run Run|ActiveRun
 ---@param index integer
 function addon.RunHistory:SetRun(instanceId, run, index)
     local runs = GetRunHistory(instanceId).runs
@@ -54,10 +54,13 @@ function addon.RunHistory:SetRun(instanceId, run, index)
 end
 
 ---@param instanceId integer
----@return ActiveRun
-function addon.RunHistory:GetCurrentRun(instanceId)
+---@param run Run|ActiveRun
+---@return integer
+function addon.RunHistory:AddRun(instanceId, run)
     local runs = GetRunHistory(instanceId).runs
-    return runs[#runs]
+    run.state = nil
+    table.insert(runs, 1, run)
+    return 1
 end
 
 ---@param instanceId integer
@@ -67,6 +70,13 @@ function addon.RunHistory:GetPreviousRun(instanceId)
     if #runs > 1 then
         return runs[#runs - 1]
     end
+end
+
+---@param instanceId integer
+---@return ActiveRun
+function addon.RunHistory:GetCurrentRun(instanceId)
+    local runs = GetRunHistory(instanceId).runs
+    return runs[#runs]
 end
 
 ---@param run ActiveRun
@@ -99,7 +109,7 @@ function addon.RunHistory:PersistCurrentRun(run)
 end
 
 ---@param instanceId integer
----@return Run[], integer
+---@return (Run|ActiveRun)[], integer
 function addon.RunHistory:GetHistoricalRuns(instanceId)
     local runs = GetRunHistory(instanceId).runs
     if HasAtLeastOneCompletedSplit(runs[#runs]) then
@@ -112,17 +122,7 @@ function addon.RunHistory:GetHistoricalRuns(instanceId)
 end
 
 ---@param instanceId integer
----@param run Run|ActiveRun
----@return integer
-function addon.RunHistory:AddRun(instanceId, run)
-    local runs = GetRunHistory(instanceId).runs
-    run.state = nil
-    table.insert(runs, 1, run)
-    return 1
-end
-
----@param instanceId integer
----@return Run?
+---@return (Run|ActiveRun)?
 function addon.RunHistory:GetComparisonRun(instanceId)
     local runHistory = GetRunHistory(instanceId)
     local index = runHistory.comparisonRunIndex

@@ -98,7 +98,7 @@ function addon.ImportExportUI:ToggleImport()
 end
 
 ---@param instanceId integer
----@param run Run
+---@param run Run|ActiveRun
 function addon.ImportExportUI:ToggleExport(instanceId, run)
     self:Init()
     if self.exportFrame:IsShown() or not instanceId then
@@ -106,6 +106,10 @@ function addon.ImportExportUI:ToggleExport(instanceId, run)
         return
     end
     self.exportFrame:Show()
+    if run.state then
+        run = addon.Utility:DeepCopy(run)
+        run.state = nil
+    end
     local exportString = addon.ImportExport:ExportRun(instanceId, run)
     self.exportEditBox:SetText(exportString)
     self.exportEditBox:SetFocus(true)

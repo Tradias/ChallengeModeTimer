@@ -15,15 +15,18 @@
 ---@field comment string?
 ---@field completed boolean
 ---@field duration number
+---@field importTimestamp number?
 ---@field medalIndex integer?
 ---@field runners Runner[]
 ---@field splits Split[]
 ---@field startTimestamp number
 
 ---@class ActiveRun : Run
+---@field state RunState
+
+---@class SampleRun : ActiveRun
 ---@field originalGetComparisonRun fun(integer): Run?
 ---@field previousRun ActiveRun?
----@field state RunState
 
 ---@type string, ChallengeModeTimerAddon
 local _, addon = ...
@@ -591,7 +594,7 @@ end
 ---@param totalTime number
 ---@param completed boolean
 ---@param secondsAgo number
----@return ActiveRun
+---@return SampleRun
 function addon.Run:CreateSampleRun(instanceId, totalTime, completed, secondsAgo)
     local run = self:CreateRun(instanceId)
     local splitProfile = addon.SplitProfile:Get(instanceId)
@@ -625,6 +628,7 @@ function addon.Run:CreateSampleRun(instanceId, totalTime, completed, secondsAgo)
         end
     end
 
+    ---@diagnostic disable-next-line: return-type-mismatch
     return run
 end
 

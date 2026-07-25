@@ -1,3 +1,7 @@
+---@class ImportedRun
+---@field instanceId integer
+---@field run Run
+
 ---@type string, ChallengeModeTimerAddon
 local addonName, addon = ...
 
@@ -63,7 +67,7 @@ end
 
 ---@param inString string
 ---@return boolean
----@return string|table
+---@return string|ImportedRun
 function addon.ImportExport:ImportRun(inString)
     local deserialized, schemaVersion = StringToTable(inString, true)
     if not schemaVersion then
