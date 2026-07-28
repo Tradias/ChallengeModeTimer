@@ -760,8 +760,10 @@ function addon.RunHistoryUI:SetSelectedInstance(instanceId)
     if not dungeon then
         return
     end
+    self.dropdown:Hide()
     self.selectedInstanceId = instanceId
     self:Refresh()
+    self.dropdown:Show()
 end
 
 ---@param frame Frame

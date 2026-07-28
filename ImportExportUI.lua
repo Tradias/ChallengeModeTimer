@@ -57,7 +57,7 @@ function addon.ImportExportUI:Init()
             local runIndex = addon.RunHistory:AddRun(deserialized.instanceId, deserialized.run)
             addon.RunHistory:SetComparisonRunIndex(deserialized.instanceId, runIndex)
             importFrame:Hide()
-            addon.RunHistoryUI:Refresh()
+            addon.RunHistoryUI:SetSelectedInstance(deserialized.instanceId)
         end)
         importFrame:SetScript("OnEnter", function()
             addon.RunHistoryUI:ShowRunTooltip(importFrame, deserialized.instanceId, deserialized.run,
