@@ -9,14 +9,6 @@ local RUNNER_COLUMN_INDEX = 4
 local COMPARISON_RUN_SELECTION_HIGHTLIGHT = { 0.2, 0.6, 1, 0.25 }
 local DELETE_MODE_HIGHTLIGHT = { 1, 0.2, 0.2, 0.25 }
 
-local function SetFont(fontString, desiredSize)
-    local _, size, flags = fontString:GetFont()
-    if desiredSize then
-        size = desiredSize
-    end
-    fontString:SetFont(addon.Constants.FONT, size, flags)
-end
-
 local function FormatRunDate(timestamp)
     return date("%Y/%m/%d %H-%M", timestamp)
 end
@@ -455,17 +447,17 @@ local function CreateTable(self)
     comparisonHint:SetPoint("BOTTOM", tableFrame.frame, "BOTTOM", 0, 8)
     comparisonHint:SetText("↑ click on a run to compare against ↑")
     comparisonHint:SetTextColor(0.7, 0.7, 0.7)
-    SetFont(comparisonHint, 11)
+    addon.Utility:SetFont(comparisonHint, 11)
     comparisonHint:Hide()
     self.comparisonHint = comparisonHint
 
     local function SetTableFonts()
         for _, col in ipairs(tableFrame.head.cols) do
-            SetFont(col:GetFontString(), 13)
+            addon.Utility:SetFont(col:GetFontString(), 13)
         end
         for _, row in ipairs(tableFrame.rows) do
             for _, col in ipairs(row.cols) do
-                SetFont(col.text, 12)
+                addon.Utility:SetFont(col.text, 12)
             end
         end
     end
@@ -586,7 +578,7 @@ function addon.RunHistoryUI:Init()
     filterBox:SetSize(150, 20)
     filterBox:SetPoint("LEFT", dropdown, "RIGHT", 25, 0)
     filterBox:SetAutoFocus(false)
-    SetFont(filterBox, 12)
+    addon.Utility:SetFont(filterBox, 12)
 
     local filterPlaceholder = "Filter"
     local isPlaceholder = false
@@ -729,7 +721,7 @@ function addon.RunHistoryUI:Init()
     deleteModeText:SetText("Click on a run to delete")
     deleteModeText:SetTextColor(unpack(DELETE_MODE_HIGHTLIGHT))
     deleteModeText:SetAlpha(1)
-    SetFont(deleteModeText, 12)
+    addon.Utility:SetFont(deleteModeText, 12)
 
     local deleteModeDoneButton = CreateFrame("Button", nil, bottomBarDeleteModeFrame, "UIPanelButtonTemplate")
     deleteModeDoneButton:SetPoint("RIGHT", bottomBarButtonFrame, "RIGHT", -10, 1)

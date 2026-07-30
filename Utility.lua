@@ -179,3 +179,17 @@ function addon.Utility:ShortenTextToWidth(text, targetWidth)
     end
     return ""
 end
+
+---@param fontString FontObject|FontString
+---@param desiredSize integer?
+---@param desiredFont string?
+function addon.Utility:SetFont(fontString, desiredSize, desiredFont)
+    local font, size, flags = fontString:GetFont()
+    if desiredSize then
+        size = desiredSize
+    end
+    if desiredFont then
+        font = desiredFont
+    end
+    fontString:SetFont(font, size, flags)
+end

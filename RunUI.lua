@@ -6,6 +6,49 @@ addon.RunUI = addon.RunUI or {}
 
 local RUN_UI_WIDTH = 300
 
+---@type FontObject
+local RUN_UI_TIMER_FONT = nil
+
+---@type FontObject
+local RUN_UI_TIMER_SMALL_FONT = nil
+
+---@type FontObject
+local RUN_UI_MEDAL_FONT = nil
+
+---@type FontObject
+local RUN_UI_UNLOCKED_HINT_FONT = nil
+
+---@type FontObject
+local RUN_UI_SPLIT_FONT = nil
+
+local function CreateRunUIFontObject(fontPath, name, size)
+    local font = CreateFont(name)
+    font:SetFont(fontPath, size, "OUTLINE")
+    font:SetShadowColor(0, 0, 0)
+    font:SetShadowOffset(1, -1)
+    return font
+end
+
+local function InitializeFonts(runUI)
+    local fontPath = addon.LSM:Fetch("font", runUI:GetFont())
+    RUN_UI_TIMER_FONT = CreateRunUIFontObject(fontPath, "ChallengeModeTimerRunUITimerFont", 22)
+    RUN_UI_TIMER_SMALL_FONT = CreateRunUIFontObject(fontPath, "ChallengeModeTimerRunUITimerSmallFont", 14)
+    RUN_UI_MEDAL_FONT = CreateRunUIFontObject(fontPath, "ChallengeModeTimerRunUIMedalFont", 13)
+    RUN_UI_UNLOCKED_HINT_FONT = CreateRunUIFontObject(fontPath, "ChallengeModeTimerRunUIUnlockedHintFont", 12)
+    RUN_UI_SPLIT_FONT = CreateRunUIFontObject(fontPath, "ChallengeModeTimerRunUISplitFont", 14)
+end
+
+local function UpdateFonts(runUI)
+    local fontPath = addon.LSM:Fetch("font", runUI:GetFont())
+    if fontPath then
+        addon.Utility:SetFont(RUN_UI_TIMER_FONT, nil, fontPath)
+        addon.Utility:SetFont(RUN_UI_TIMER_SMALL_FONT, nil, fontPath)
+        addon.Utility:SetFont(RUN_UI_MEDAL_FONT, nil, fontPath)
+        addon.Utility:SetFont(RUN_UI_UNLOCKED_HINT_FONT, nil, fontPath)
+        addon.Utility:SetFont(RUN_UI_SPLIT_FONT, nil, fontPath)
+    end
+end
+
 local function FormatTimeParts(seconds)
     local minutes = math.floor(seconds / 60)
     local secs = math.floor(seconds % 60)
@@ -28,7 +71,7 @@ end
 local function CreateTimerTextPart(runFrame)
     local timerText = runFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     timerText:SetTextColor(1, 1, 1, 1)
-    timerText:SetFont(addon.Constants.FONT, 22, "OUTLINE")
+    timerText:SetFontObject(RUN_UI_TIMER_FONT)
     return timerText
 end
 
@@ -46,16 +89,16 @@ local function CreateTimerText(runFrame)
     timerText.secondsTens:SetPoint("CENTER", runFrame, "CENTER", -15, 0)
     timerText.secondsOnes:SetPoint("CENTER", runFrame, "CENTER", 0, 0)
     timerText.dot:SetPoint("CENTER", runFrame, "CENTER", 10, -2.5)
-    timerText.dot:SetFont(addon.Constants.FONT, 14, "OUTLINE")
+    timerText.dot:SetFontObject(RUN_UI_TIMER_SMALL_FONT)
     timerText.milliseconds:SetPoint("CENTER", runFrame, "CENTER", 17.5, -2.5)
-    timerText.milliseconds:SetFont(addon.Constants.FONT, 14, "OUTLINE")
+    timerText.milliseconds:SetFontObject(RUN_UI_TIMER_SMALL_FONT)
     return timerText
 end
 
 local function CreateMedalText(runFrame)
     local medalText = runFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     medalText:SetTextColor(1, 1, 1, 1)
-    medalText:SetFont(addon.Constants.FONT, 13, "OUTLINE")
+    medalText:SetFontObject(RUN_UI_MEDAL_FONT)
     medalText:SetJustifyH("LEFT")
     return medalText
 end
@@ -64,7 +107,7 @@ local function CreateUnlockedHint(runFrame)
     local unlockedHint = runFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     unlockedHint:SetText("unlocked")
     unlockedHint:SetTextColor(0.7, 0.7, 0.7, 1)
-    unlockedHint:SetFont(addon.Constants.FONT, 12, "OUTLINE")
+    unlockedHint:SetFontObject(RUN_UI_UNLOCKED_HINT_FONT)
     unlockedHint:SetJustifyH("LEFT")
     return unlockedHint
 end
@@ -237,10 +280,24 @@ function addon.RunUI:UpdateTimerText(runDuration)
     end
 end
 
+function addon.RunUI:GetFont()
+    if ChallengeModeTimerDB.runUI.font == nil then
+        return addon.Constants.DEFAULT_FONT_NAME
+    end
+    return ChallengeModeTimerDB.runUI.font
+end
+
+function addon.RunUI:SetFont(fontName)
+    ChallengeModeTimerDB.runUI.font = fontName
+    UpdateFonts(self)
+end
+
 function addon.RunUI:Init()
     if not ChallengeModeTimerDB.runUI then
         ChallengeModeTimerDB.runUI = {}
     end
+
+    InitializeFonts(self)
 
     self.run = addon.Run:CreateRun(1004)
 
@@ -447,26 +504,26 @@ function addon.RunUI:UpdateSplits()
             lineFrame:SetPoint("TOPLEFT", self.splitsFrame, "TOPLEFT", 0, -(index - 1) * lineHeight - distanceFromTimer)
             lineFrame:SetSize(self.splitsFrame:GetWidth(), lineHeight)
 
-            local label = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            local label = lineFrame:CreateFontString(nil, "OVERLAY")
+            label:SetFontObject(RUN_UI_SPLIT_FONT)
             label:SetPoint("CENTER", lineFrame, "CENTER", labelXOffset, 0)
             label:SetWidth(220)
             label:SetJustifyH(labelJustifyH)
-            label:SetFont(addon.Constants.FONT, 14, "OUTLINE")
             label:SetWordWrap(false)
 
-            local duration = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            local duration = lineFrame:CreateFontString(nil, "OVERLAY")
+            duration:SetFontObject(RUN_UI_SPLIT_FONT)
             duration:SetPoint("CENTER", lineFrame, "CENTER", durationXOffset, 0)
             duration:SetWidth(120)
             duration:SetJustifyH(durationJustifyH)
-            duration:SetFont(addon.Constants.FONT, 14, "OUTLINE")
             duration:SetTextColor(1, 1, 1, 1)
             duration:SetWordWrap(false)
 
-            local comparison = lineFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            local comparison = lineFrame:CreateFontString(nil, "OVERLAY")
+            comparison:SetFontObject(RUN_UI_SPLIT_FONT)
             comparison:SetPoint("CENTER", lineFrame, "CENTER", comparisonXOffset, 0)
             comparison:SetWidth(120)
             comparison:SetJustifyH(comparisonJustifyH)
-            comparison:SetFont(addon.Constants.FONT, 14, "OUTLINE")
             comparison:SetWordWrap(false)
 
             line = {

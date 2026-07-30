@@ -222,4 +222,31 @@ function addon.AppearanceUI:Init()
         function(value)
             addon.RunUI:SetSplitComparisonJustifyH(value)
         end)
+
+    -- Font
+    local fontDropdown, fontLabel = CreateDropdown(appearanceFrame, "Font")
+    fontLabel:SetPoint("TOPLEFT", splitComparisonOffsetInputLabel, "BOTTOMLEFT", 0, -25)
+    fontDropdown:SetPoint("TOPLEFT", fontLabel, "BOTTOMLEFT", 0, -8)
+    fontDropdown:SetWidth(237)
+
+    local function InitializeFontDropdown()
+        local fonts = addon.LSM:List("font")
+
+        local function isSelected(fontName)
+            return fontName == addon.RunUI:GetFont()
+        end
+
+        local function onSelect(fontName)
+            addon.RunUI:SetFont(fontName)
+        end
+
+        fontDropdown:SetupMenu(function(_, rootDescription)
+            rootDescription:SetScrollMode(220)
+
+            for _, fontName in ipairs(fonts) do
+                rootDescription:CreateRadio(fontName, isSelected, onSelect, fontName)
+            end
+        end)
+    end
+    InitializeFontDropdown()
 end
