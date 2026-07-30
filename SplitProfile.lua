@@ -33,7 +33,7 @@ local DEFAULT_SPLIT_PROFILES = {
     },
     [961] = { -- Stormstout Brewery
         splits = {
-            { name = "Ook-ook",              criteriaIndex = 1, criteriaId = 19236, totalQuantity = 1, encounterId = 1412 },
+            { name = "Ook-Ook",              criteriaIndex = 1, criteriaId = 19236, totalQuantity = 1, encounterId = 1412 },
             { name = "Hoptallus",            criteriaIndex = 2, criteriaId = 19237, totalQuantity = 1, encounterId = 1413 },
             { name = "Yan-Zhu the Uncasked", criteriaIndex = 3, criteriaId = 19108, totalQuantity = 1, encounterId = 1414 },
             { name = "Enemies",              criteriaIndex = 4, criteriaId = 0,     totalQuantity = 25 }
