@@ -66,37 +66,17 @@ function addon.AppearanceUI:Init()
     local appearanceFrame = addon.OptionsUI:GetAppearanceFrame()
 
     appearanceFrame:HookScript("OnShow", function()
-        addon.RunUI:ShowUnlockedHint(addon.RunUI:IsMoveModeEnabled())
+        addon.RunUI:SetMoveMode(true)
     end)
 
     appearanceFrame:HookScript("OnHide", function()
-        addon.RunUI:ShowUnlockedHint(false)
+        addon.RunUI:SetMoveMode(false)
     end)
-
-    -- Timer position
-    local moveButton = CreateFrame("Button", nil, appearanceFrame, "UIPanelButtonTemplate")
-    moveButton:SetSize(110, 24)
-    moveButton:SetPoint("TOPLEFT", appearanceFrame, "TOPLEFT", 10, 0)
-
-    local function UpdateMoveButtonText()
-        if addon.RunUI:IsMoveModeEnabled() then
-            moveButton:SetText("Lock")
-        else
-            moveButton:SetText("Unlock")
-        end
-    end
-
-    moveButton:SetScript("OnClick", function()
-        addon.RunUI:ToggleMoveMode()
-        UpdateMoveButtonText()
-    end)
-
-    UpdateMoveButtonText()
 
     -- Reset position
     local resetPositionButton = CreateFrame("Button", nil, appearanceFrame, "UIPanelButtonTemplate")
     resetPositionButton:SetSize(110, 24)
-    resetPositionButton:SetPoint("LEFT", moveButton, "RIGHT", 8, 0)
+    resetPositionButton:SetPoint("TOPLEFT", appearanceFrame, "TOPLEFT", 10, 0)
     resetPositionButton:SetText("Reset Position")
     resetPositionButton:SetScript("OnClick", function()
         addon.RunUI:ResetPosition()
@@ -104,7 +84,7 @@ function addon.AppearanceUI:Init()
 
     -- Medal time visibility
     local showMedalTimeCheckbox = CreateCheckbox(appearanceFrame, "Show medal time")
-    showMedalTimeCheckbox:SetPoint("TOPLEFT", moveButton, "BOTTOMLEFT", -4, -8)
+    showMedalTimeCheckbox:SetPoint("TOPLEFT", resetPositionButton, "BOTTOMLEFT", -4, -8)
     showMedalTimeCheckbox:SetChecked(addon.RunUI:GetShowMedalTime())
     showMedalTimeCheckbox:SetScript("OnClick", function(button)
         addon.RunUI:SetShowMedalTime(button:GetChecked())

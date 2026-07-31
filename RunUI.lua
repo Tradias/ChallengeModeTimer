@@ -16,9 +16,6 @@ local RUN_UI_TIMER_SMALL_FONT = nil
 local RUN_UI_MEDAL_FONT = nil
 
 ---@type FontObject
-local RUN_UI_UNLOCKED_HINT_FONT = nil
-
----@type FontObject
 local RUN_UI_SPLIT_FONT = nil
 
 local function CreateRunUIFontObject(fontPath, name, size)
@@ -34,7 +31,6 @@ local function InitializeFonts(runUI)
     RUN_UI_TIMER_FONT = CreateRunUIFontObject(fontPath, "ChallengeModeTimerRunUITimerFont", 22)
     RUN_UI_TIMER_SMALL_FONT = CreateRunUIFontObject(fontPath, "ChallengeModeTimerRunUITimerSmallFont", 14)
     RUN_UI_MEDAL_FONT = CreateRunUIFontObject(fontPath, "ChallengeModeTimerRunUIMedalFont", 13)
-    RUN_UI_UNLOCKED_HINT_FONT = CreateRunUIFontObject(fontPath, "ChallengeModeTimerRunUIUnlockedHintFont", 12)
     RUN_UI_SPLIT_FONT = CreateRunUIFontObject(fontPath, "ChallengeModeTimerRunUISplitFont", 14)
 end
 
@@ -44,7 +40,6 @@ local function UpdateFonts(runUI)
         addon.Utility:SetFont(RUN_UI_TIMER_FONT, nil, fontPath)
         addon.Utility:SetFont(RUN_UI_TIMER_SMALL_FONT, nil, fontPath)
         addon.Utility:SetFont(RUN_UI_MEDAL_FONT, nil, fontPath)
-        addon.Utility:SetFont(RUN_UI_UNLOCKED_HINT_FONT, nil, fontPath)
         addon.Utility:SetFont(RUN_UI_SPLIT_FONT, nil, fontPath)
     end
 end
@@ -101,15 +96,6 @@ local function CreateMedalText(runFrame)
     medalText:SetFontObject(RUN_UI_MEDAL_FONT)
     medalText:SetJustifyH("LEFT")
     return medalText
-end
-
-local function CreateUnlockedHint(runFrame)
-    local unlockedHint = runFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    unlockedHint:SetText("unlocked")
-    unlockedHint:SetTextColor(0.7, 0.7, 0.7, 1)
-    unlockedHint:SetFontObject(RUN_UI_UNLOCKED_HINT_FONT)
-    unlockedHint:SetJustifyH("LEFT")
-    return unlockedHint
 end
 
 local function GetTimerScale()
@@ -322,10 +308,6 @@ function addon.RunUI:Init()
     runFrame:EnableMouse(false)
     runFrame:RegisterForDrag("LeftButton")
 
-    self.unlockedHint = CreateUnlockedHint(runFrame)
-    self.unlockedHint:SetPoint("TOPLEFT", runFrame, "TOPLEFT", 0, 0)
-    self.unlockedHint:Hide()
-
     local timerFrame = CreateFrame("Frame", nil, runFrame)
     timerFrame:SetPoint("TOPLEFT", runFrame, "TOPLEFT", 0, 0)
     timerFrame:SetPoint("TOPRIGHT", runFrame, "TOPRIGHT", 0, 0)
@@ -367,10 +349,6 @@ function addon.RunUI:Init()
     self.moveModeEnabled = false
 end
 
-function addon.RunUI:ShowUnlockedHint(isShow)
-    self.unlockedHint:SetShown(isShow)
-end
-
 function addon.RunUI:SetMoveMode(enabled)
     if enabled == self.moveModeEnabled then
         return
@@ -379,15 +357,6 @@ function addon.RunUI:SetMoveMode(enabled)
     self.moveModeEnabled = enabled
     self.runFrame:EnableMouse(enabled)
     self.splitsFrame:EnableMouse(enabled)
-    self:ShowUnlockedHint(enabled)
-end
-
-function addon.RunUI:IsMoveModeEnabled()
-    return self.moveModeEnabled
-end
-
-function addon.RunUI:ToggleMoveMode()
-    self:SetMoveMode(not self.moveModeEnabled)
 end
 
 function addon.RunUI:ResetPosition()
