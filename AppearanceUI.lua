@@ -24,7 +24,7 @@ local function CreateEditBox(parentFrame, labelText)
 
     local editBox = CreateFrame("EditBox", nil, parentFrame, "InputBoxTemplate")
     editBox:SetPoint("LEFT", label, "RIGHT", 10, 0)
-    editBox:SetSize(70, 24)
+    editBox:SetSize(50, 24)
     editBox:SetAutoFocus(false)
     editBox:SetFontObject(addon.Constants.FONT_OBJECT)
     editBox:SetScript("OnEnterPressed", function(self)
@@ -52,14 +52,57 @@ local function CreateCheckbox(parentFrame, labelText)
     return checkButton
 end
 
-local function InitializeJustifyDropdown(dropdown, isSelected, onSelect)
-    MenuUtil.CreateRadioMenu(dropdown,
-        isSelected,
-        onSelect,
+local function CreateOffsetInputs(parentFrame, frameAbove, name, getOffset, setOffset, getJustify, setJustify)
+    local offsetLabel = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    offsetLabel:SetPoint("TOPLEFT", frameAbove, "BOTTOMLEFT", 0, -25)
+    offsetLabel:SetText(name)
+
+    local slider = CreateFrame("Slider", nil, parentFrame, "OptionsSliderTemplate")
+
+    local offsetInput, offsetInputLabel = CreateEditBox(parentFrame, "X")
+    offsetInputLabel:SetPoint("TOPLEFT", offsetLabel, "BOTTOMLEFT", 0, -10)
+    offsetInput:SetText(tostring(getOffset(addon.RunUI)))
+    offsetInput:SetScript("OnTextChanged", function(editBox, userInput)
+        local value = tonumber(editBox:GetText())
+        if value then
+            setOffset(addon.RunUI, value)
+            if userInput then
+                slider:SetValue(value)
+            end
+        end
+    end)
+
+    -- Slider
+    slider:SetWidth(200)
+    slider:SetObeyStepOnDrag(true)
+    slider:SetPoint("LEFT", offsetInputLabel, "RIGHT", 10, 0)
+    slider:SetMinMaxValues(-200, 200)
+    slider:SetValueStep(5)
+    slider:SetScript("OnValueChanged", function(_, value, userInput)
+        if userInput then
+            offsetInput:SetText(tostring(value))
+        end
+    end)
+    slider:SetValue(getOffset(addon.RunUI))
+
+    offsetInput:SetPoint("TOPLEFT", slider, "TOPRIGHT", 18, 0)
+
+    -- Dropdown
+    local alignDropdown, alignLabel = CreateDropdown(parentFrame, "Align")
+    alignLabel:SetPoint("LEFT", offsetInput, "RIGHT", 15, 0)
+    MenuUtil.CreateRadioMenu(alignDropdown,
+        function(value)
+            return value == getJustify(addon.RunUI)
+        end,
+        function(value)
+            setJustify(addon.RunUI, value)
+        end,
         { "Left", "LEFT" },
         { "Center", "CENTER" },
         { "Right", "RIGHT" }
     )
+
+    return offsetInputLabel
 end
 
 function addon.AppearanceUI:Init()
@@ -129,83 +172,27 @@ function addon.AppearanceUI:Init()
     UpdateSplitsScaleText(splitsScaleSlider:GetValue())
 
     -- Split label
-    local splitLabelOffsetLabel = appearanceFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    splitLabelOffsetLabel:SetPoint("TOPLEFT", splitsScaleSlider, "BOTTOMLEFT", 0, -25)
-    splitLabelOffsetLabel:SetText("Split label")
-
-    local splitLabelOffsetInput, splitLabelOffsetInputLabel = CreateEditBox(appearanceFrame, "X")
-    splitLabelOffsetInputLabel:SetPoint("TOPLEFT", splitLabelOffsetLabel, "BOTTOMLEFT", 0, -10)
-    splitLabelOffsetInput:SetText(tostring(addon.RunUI:GetSplitLabelXOffset()))
-    splitLabelOffsetInput:SetScript("OnTextChanged", function(editBox)
-        local value = tonumber(editBox:GetText())
-        if value then
-            addon.RunUI:SetSplitLabelXOffset(value)
-        end
-    end)
-
-    local splitLabelJustifyDropdown, splitLabelJustifyLabel = CreateDropdown(appearanceFrame, "Align")
-    splitLabelJustifyLabel:SetPoint("LEFT", splitLabelOffsetInput, "RIGHT", 25, 0)
-    InitializeJustifyDropdown(splitLabelJustifyDropdown,
-        function(value)
-            return value == addon.RunUI:GetSplitLabelJustifyH()
-        end,
-        function(value)
-            addon.RunUI:SetSplitLabelJustifyH(value)
-        end)
+    local splitLabelOffsetSliderLabel = CreateOffsetInputs(appearanceFrame, splitsScaleSlider, "Split label",
+        addon.RunUI.GetSplitLabelXOffset,
+        addon.RunUI.SetSplitLabelXOffset, addon.RunUI.GetSplitLabelJustifyH,
+        addon.RunUI.SetSplitLabelJustifyH)
 
     -- Split duration
-    local splitDurationLabel = appearanceFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    splitDurationLabel:SetPoint("TOPLEFT", splitLabelOffsetInputLabel, "BOTTOMLEFT", 0, -25)
-    splitDurationLabel:SetText("Split duration")
-
-    local splitDurationOffsetInput, splitDurationOffsetInputLabel = CreateEditBox(appearanceFrame, "X")
-    splitDurationOffsetInputLabel:SetPoint("TOPLEFT", splitDurationLabel, "BOTTOMLEFT", 0, -10)
-    splitDurationOffsetInput:SetText(tostring(addon.RunUI:GetSplitDurationXOffset()))
-    splitDurationOffsetInput:SetScript("OnTextChanged", function(editBox)
-        local value = tonumber(editBox:GetText())
-        if value then
-            addon.RunUI:SetSplitDurationXOffset(value)
-        end
-    end)
-
-    local splitDurationJustifyDropdown, splitDurationJustifyLabel = CreateDropdown(appearanceFrame, "Align")
-    splitDurationJustifyLabel:SetPoint("LEFT", splitDurationOffsetInput, "RIGHT", 25, 0)
-    InitializeJustifyDropdown(splitDurationJustifyDropdown,
-        function(value)
-            return value == addon.RunUI:GetSplitDurationJustifyH()
-        end,
-        function(value)
-            addon.RunUI:SetSplitDurationJustifyH(value)
-        end)
+    local splitDurationOffsetSliderLabel = CreateOffsetInputs(appearanceFrame, splitLabelOffsetSliderLabel, "Split label",
+        addon.RunUI.GetSplitDurationXOffset,
+        addon.RunUI.SetSplitDurationXOffset, addon.RunUI.GetSplitDurationJustifyH,
+        addon.RunUI.SetSplitDurationJustifyH)
 
     -- Split comparison
-    local splitComparisonLabel = appearanceFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    splitComparisonLabel:SetPoint("TOPLEFT", splitDurationOffsetInputLabel, "BOTTOMLEFT", 0, -25)
-    splitComparisonLabel:SetText("Split comparison")
-
-    local splitComparisonOffsetInput, splitComparisonOffsetInputLabel = CreateEditBox(appearanceFrame, "X")
-    splitComparisonOffsetInputLabel:SetPoint("TOPLEFT", splitComparisonLabel, "BOTTOMLEFT", 0, -10)
-    splitComparisonOffsetInput:SetText(tostring(addon.RunUI:GetSplitComparisonXOffset()))
-    splitComparisonOffsetInput:SetScript("OnTextChanged", function(editBox)
-        local value = tonumber(editBox:GetText())
-        if value then
-            addon.RunUI:SetSplitComparisonXOffset(value)
-        end
-    end)
-
-    local splitComparisonJustifyDropdown, splitComparisonJustifyLabel = CreateDropdown(appearanceFrame, "Align")
-    splitComparisonJustifyLabel:SetPoint("LEFT", splitComparisonOffsetInput, "RIGHT", 25, 0)
-    InitializeJustifyDropdown(splitComparisonJustifyDropdown,
-        function(value)
-            return value == addon.RunUI:GetSplitComparisonJustifyH()
-        end,
-        function(value)
-            addon.RunUI:SetSplitComparisonJustifyH(value)
-        end)
+    local splitComparsionOffsetSliderLabel = CreateOffsetInputs(appearanceFrame, splitDurationOffsetSliderLabel,
+        "Split label",
+        addon.RunUI.GetSplitComparisonXOffset,
+        addon.RunUI.SetSplitComparisonXOffset, addon.RunUI.GetSplitComparisonJustifyH,
+        addon.RunUI.SetSplitComparisonJustifyH)
 
     -- Font
     local fontDropdown, fontLabel = CreateDropdown(appearanceFrame, "Font")
-    fontLabel:SetPoint("TOPLEFT", splitComparisonOffsetInputLabel, "BOTTOMLEFT", 0, -25)
+    fontLabel:SetPoint("TOPLEFT", splitComparsionOffsetSliderLabel, "BOTTOMLEFT", 0, -25)
     fontDropdown:SetPoint("TOPLEFT", fontLabel, "BOTTOMLEFT", 0, -8)
     fontDropdown:SetWidth(237)
 
