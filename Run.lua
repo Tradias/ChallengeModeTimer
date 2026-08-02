@@ -311,9 +311,9 @@ local function UpdatePendingSplits(run)
     end
 end
 
+---@param run ActiveRun
 ---@param criteriaId integer
-local function UpdateCriteriaSplit(criteriaId)
-    local run = g_runs[g_currentInstanceId]
+local function UpdateCriteriaSplit(run, criteriaId)
     local splitProfile = addon.SplitProfile:Get(g_currentInstanceId)
     for index, splitDefinition in ipairs(splitProfile.splits) do
         if splitDefinition.criteriaId == criteriaId then
@@ -529,7 +529,8 @@ local function OnScenarioCriteriaUpdate(criteriaId)
     local dungeonName, instanceType, difficultyId, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceId =
         GetInstanceInfo()
     g_currentInstanceId = instanceId
-    if InChallengeMode() and UpdateCriteriaSplit(criteriaId) then
+    local run = g_runs[g_currentInstanceId]
+    if InChallengeMode() and run and UpdateCriteriaSplit(run, criteriaId) then
         addon.RunUI:UpdateSplits()
     end
 end
