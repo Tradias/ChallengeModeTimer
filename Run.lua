@@ -6,6 +6,7 @@
 ---@field pendingSplitUpdateIndices integer[]
 ---@field running boolean
 ---@field startTime number
+---@field finalSplitIndex integer?
 
 ---@class Runner
 ---@field classId number
@@ -268,7 +269,8 @@ end
 ---@param splitDefinition SplitDefinition
 local function UpdateSplit(run, split, splitDefinition)
     local isUpdated = false
-    local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(splitDefinition.criteriaIndex)
+    local splitIndex = splitDefinition.criteriaIndex
+    local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(splitIndex)
     if not criteriaInfo then
         return isUpdated
     end
@@ -282,14 +284,14 @@ local function UpdateSplit(run, split, splitDefinition)
     end
     if not split.completed and criteriaInfo.completed then
         if HasOnlyOneIncompleteSplit(run) then
-            return isUpdated
+            run.state.finalSplitIndex = splitIndex
         end
         split.completed = true
         isUpdated = true
         if run.state.isStartTimeAccurate then
             UpdateSplitDuration(run, split, criteriaInfo)
         elseif splitDefinition.criteriaId ~= 20673 then -- Lorewalker Stonestep `criteriaInfo.elapsed` is always 0
-            AddPendingSplitUpdate(run, splitDefinition.criteriaIndex)
+            AddPendingSplitUpdate(run, splitIndex)
         end
     end
     return isUpdated
@@ -335,7 +337,7 @@ local function CompleteFinalSplit(run)
     local finalSplit
     local incompleteSplitCount = 0
     for index, split in ipairs(run.splits) do
-        if not split.completed then
+        if not split.completed or run.state.finalSplitIndex and run.state.finalSplitIndex == index then
             incompleteSplitCount = incompleteSplitCount + 1
             split.completed = true
             local splitDefinition = splitProfile.splits[index]
@@ -345,6 +347,16 @@ local function CompleteFinalSplit(run)
     end
     if incompleteSplitCount == 1 then
         finalSplit.duration = run.duration
+    end
+end
+
+---@param splits Split[]
+---@param duration number
+local function ClampSplitsDuration(splits, duration)
+    for _, split in ipairs(splits) do
+        if split.duration > duration then
+            split.duration = duration
+        end
     end
 end
 
@@ -416,7 +428,13 @@ local function OnRunEnd(run, challengeCompletionInfo)
         run.duration = challengeCompletionInfo.time / 1000
         run.medalIndex = addon.Dungeons:GetMedalIndexByDuration(instanceId, run.duration)
         run.runners = BuildRunnersFromChallengeCompletionInfo(challengeCompletionInfo)
+        if not run.state.isStartTimeAccurate then
+            run.state.startTime = GetTime() - run.duration
+            run.state.isStartTimeAccurate = true
+            UpdatePendingSplits(run)
+        end
         CompleteFinalSplit(run)
+        ClampSplitsDuration(run.splits, run.duration)
     end
     local nextRun = addon.RunHistory:PersistCurrentRun(run)
     nextRun = addon.Utility:DeepCopy(nextRun)
