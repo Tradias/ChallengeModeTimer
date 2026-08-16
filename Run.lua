@@ -428,11 +428,6 @@ local function OnRunEnd(run, challengeCompletionInfo)
         run.duration = challengeCompletionInfo.time / 1000
         run.medalIndex = addon.Dungeons:GetMedalIndexByDuration(instanceId, run.duration)
         run.runners = BuildRunnersFromChallengeCompletionInfo(challengeCompletionInfo)
-        if not run.state.isStartTimeAccurate then
-            run.state.startTime = GetTime() - run.duration
-            run.state.isStartTimeAccurate = true
-            UpdatePendingSplits(run)
-        end
         CompleteFinalSplit(run)
         ClampSplitsDuration(run.splits, run.duration)
     end

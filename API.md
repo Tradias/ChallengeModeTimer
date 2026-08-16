@@ -181,6 +181,10 @@ During active CM:
   totalQuantity=1
 }
 
+Completed CM:
+
+empty result
+
 ## C_ScenarioInfo.GetScenarioInfo()
 
 Inside a once started CM dungeon, nil otherwise:
